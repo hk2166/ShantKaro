@@ -1,0 +1,9 @@
+.env
+.venv/
+__pycache__/
+node_modules/
+dist/
+out/
+.DS_Store
+*.wav
+*.pcm
