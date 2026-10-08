@@ -267,8 +267,9 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 ### Phase 0 — Setup and de-risking spikes · Tue Oct 6 → Sun Oct 11 (days 1–6)
 - [x] 🧑 Register on the contest form (personal-email access opens in the 2nd week of October if no institutional email)
 - [x] `git init` inside `gnani/` as its own repo; add `.gitignore` (incl. `.env`) **before** the first commit; create the GitHub repo
-- [ ] Scaffold `backend/` (uv, ruff, pyright, pytest) and `frontend/` (Vite React TS); CI workflow
-- [ ] **S0 — Access agit branch -m mainnd credit cost.** Run the REST STT and TTS quick starts. Measure the credits used by 60 s of STT and 500 characters of TTS.
+- [x] Scaffold `backend/` (uv, ruff, pyright, pytest)
+- [ ] Scaffold `frontend/` (Vite React TS); CI workflow
+- [ ] **S0 — Access and credit cost.** Run the REST STT and TTS quick starts. Measure the credits used by 60 s of STT and 500 characters of TTS.
   *Exit:* both calls work from a script; credit-per-unit numbers in `docs/spikes/s0.md`.
 - [ ] **S1 — Live STT.** Stream the Mac mic to the raw STT WebSocket with VAD headers.
   - Compare `hi-IN` vs `en-IN` on Hinglish speech.
