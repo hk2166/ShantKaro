@@ -11,6 +11,8 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
+**Progress (Oct 8):** Day 1 done. Day 2 done except S0's STT cost and the first green CI run.
+
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
 | Week | Dates | By the end of the week |
@@ -26,8 +28,8 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 ## Week 1 — Setup and spikes
 
 ### Day 1 · Tue Oct 6 (tonight, ~1 h) · Repo setup
-- [ ] 🧑 Register on the contest form if you haven't: https://www.gnani.ai/great-indian-ai-internship-registration-form
-- [ ] Make `gnani` its own git repo and ignore secrets **before** the first commit:
+- [x] 🧑 Register on the contest form if you haven't: https://www.gnani.ai/great-indian-ai-internship-registration-form
+- [x] Make `gnani` its own git repo and ignore secrets **before** the first commit:
   ```bash
   cd ~/Desktop/personal/gnani
   git init -b main
@@ -45,24 +47,24 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
   printf "GNANI_API_KEY=\nANTHROPIC_API_KEY=\n" > .env.example
   git status    # .env must NOT appear in this list
   ```
-- [ ] Scaffold the backend and folders:
+- [x] Scaffold the backend and folders:
   ```bash
   uv init --package --name shant --python 3.12 backend
   cd backend && uv add --dev ruff pyright pytest hypothesis && cd ..
   mkdir -p backend/tests backend/spikes docs/adr docs/spikes scenarios evals
   ```
-- [ ] Add `backend/tests/test_smoke.py` containing `def test_smoke(): assert True` and run `cd backend && uv run pytest`
-- [ ] First commit; create a **private** GitHub repo; push
+- [x] Add `backend/tests/test_smoke.py` containing `def test_smoke(): assert True` and run `cd backend && uv run pytest`
+- [x] First commit; create a **private** GitHub repo; push (`hk2166/ShantKaro`)
 
 **Done when:** `uv run pytest` passes, `.env` is not tracked, and the code is on GitHub.
 
 ### Day 2 · Wed Oct 7 · First Gnani calls (spike S0) + frontend scaffold
-- [ ] 🧑 Create an API key at https://app.gnani.ai/voice and put it in `.env`
-- [ ] `cd backend && uv add gnani-vachana python-dotenv websockets`
-- [ ] `backend/spikes/s0_tts.py`: Timbre REST → `out/hello.wav` with a Hinglish line (voice `Poorvi`, language `hi-en`)
-- [ ] `backend/spikes/s0_stt.py`: send that WAV to STT REST and print the transcript (a full round trip)
+- [x] 🧑 Create an API key at https://app.gnani.ai/voice and put it in `.env`
+- [x] `cd backend && uv add gnani-vachana python-dotenv websockets`
+- [x] `backend/spikes/s0_tts.py`: Timbre REST → `out/hello.wav` with a Hinglish line (voice `Poorvi`, language `hi-en`)
+- [x] `backend/spikes/s0_stt.py`: send that WAV to STT REST and print the transcript (a full round trip)
 - [ ] Measure credits: note the dashboard balance before and after ~60 s of STT and ~500 characters of TTS → `docs/spikes/s0.md`
-- [ ] Frontend scaffold: `npm create vite@latest frontend -- --template react-ts`
+- [x] Frontend scaffold: `npm create vite@latest frontend -- --template react-ts`
 - [ ] CI: `.github/workflows/ci.yml` running ruff, pyright and pytest (backend), plus tsc and build (frontend)
 
 **Done when:** you hear your Hinglish clip, get its transcript back, and CI is green.

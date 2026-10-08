@@ -7,7 +7,11 @@ authors = [
     { name = "hk2166", email = "9610hemant@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "gnani-vachana>=0.8.1",
+    "python-dotenv>=1.2.4",
+    "websockets>=17.2",
+]
 
 [project.scripts]
 shant = "shant:main"

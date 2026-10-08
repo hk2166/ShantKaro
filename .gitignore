@@ -7,3 +7,6 @@ out/
 .DS_Store
 *.wav
 *.pcm
+
+# private learning notes, never committed
+docs/spikes/
