@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 8):** Day 1 done. Day 2 done except S0's STT cost and the first green CI run.
+**Progress (Oct 11):** Days 1–3 done. Open: S0/S1 STT cost on the dashboard, and trying your own voice with `s1_live_stt.py`. Next: Day 4.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -65,19 +65,19 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - [x] `backend/spikes/s0_stt.py`: send that WAV to STT REST and print the transcript (a full round trip)
 - [ ] Measure credits: note the dashboard balance before and after ~60 s of STT and ~500 characters of TTS → `docs/spikes/s0.md`
 - [x] Frontend scaffold: `npm create vite@latest frontend -- --template react-ts`
-- [ ] CI: `.github/workflows/ci.yml` running ruff, pyright and pytest (backend), plus tsc and build (frontend)
+- [x] CI: `.github/workflows/ci.yml` running ruff, pyright and pytest (backend), plus tsc and build (frontend)
 
 **Done when:** you hear your Hinglish clip, get its transcript back, and CI is green.
 
 ### Day 3 · Thu Oct 8 · Live speech-to-text from your mic (spike S1)
-- [ ] `cd backend && uv add --dev sounddevice numpy`
-- [ ] `backend/spikes/s1_live_stt.py`: stream the mic to `wss://api.vachana.ai/stt/v3/stream` with headers (§3) and print each `transcript` and its `latency`
+- [x] `cd backend && uv add --dev sounddevice` (numpy turned out not to be needed)
+- [x] `backend/spikes/s1_live_stt.py`: stream the mic to `wss://api.vachana.ai/stt/v3/stream` with headers (§3) and print each `transcript` and its `latency`
   - Hint: `sounddevice.RawInputStream(samplerate=16000, channels=1, dtype="int16", blocksize=512)` gives exactly 1,024-byte blocks every 32 ms, which is what Gnani requires.
   - If 16 kHz fails on your Mac, record at 48 kHz and send `x-sample-rate: 48000`.
-- [ ] Say the same 10 Hinglish sentences with `lang_code` `hi-IN` and with `en-IN`. Which output is cleaner?
-- [ ] Try `x-min-silence-ms` at 400, 600 and 800. How fast is it, and how often does a sentence get split?
-- [ ] Read the `pipecat-gnani` source: can `GnaniSTTService` pass VAD headers? If not, you'll write a small custom STT service on Day 14.
-- [ ] Write `docs/spikes/s1.md`: numbers + decisions
+- [x] Say the same 10 Hinglish sentences with `lang_code` `hi-IN` and with `en-IN`. Which output is cleaner? (done with Timbre-generated speech via `s1_experiment.py`: `hi-IN` wins)
+- [x] Try `x-min-silence-ms` at 400, 600 and 800. How fast is it, and how often does a sentence get split?
+- [x] Read the `pipecat-gnani` source: can `GnaniSTTService` pass VAD headers? If not, you'll write a small custom STT service on Day 14.
+- [x] Write `docs/spikes/s1.md`: numbers + decisions (private, git-ignored)
 
 **Done when:** you see your own speech transcribed live, and you've picked a language code and a silence value.
 
