@@ -71,6 +71,7 @@ Verified from docs.gnani.ai on Oct 6 2026. Re-check if something behaves differe
 - Numbers, IDs and currency should be passed as spoken words (Input Formatting Guide).
 
 **Integrations:** `pipecat-gnani` (tested with Pipecat v1.5.0; WebSocket TTS is an `InterruptibleTTSService` → barge-in support) and `livekit-plugins-gnani`.
+- **S1 finding (Oct 11):** `pipecat-gnani` 0.5.12 can't set VAD headers, crashes on import with Pipecat 1.12 (`_NotGiven`), and pins `websockets<16` (we use 17.2). Plan: write our own thin Gnani STT/TTS services for Pipecat (Day 14).
 
 **Evon v3.3:** not on the API platform. BF16, A100/H100-class GPU, served via vLLM ≥ 0.12 (OpenAI-compatible). Will not run on our M3 Pro / 18 GB laptop.
 
@@ -143,8 +144,7 @@ Scenario 3 deliberately touches BFSI, Gnani's biggest vertical.
 ### 5.2 Latency budget (trainee stops talking → customer audio starts)
 | Stage | Budget | Lever |
 |---|---|---|
-| Server VAD end-of-speech | 400–600 ms | `x-min-silence-ms` |
-| STT finalise | 300–500 ms | — (Gnani) |
+| Server VAD end-of-speech + STT finalise | silence + ~240 ms (measured in S1: 644 / 816 / 1,013 ms at 400 / 600 / 800 ms) | `x-min-silence-ms`, starting at 500 |
 | LLM time to first sentence | 300–700 ms | Model choice, short replies, prompt caching |
 | TTS time to first audio | 100–300 ms | Realtime WS, keep connection warm |
 | Network + playout buffer | 100–200 ms | WebRTC |
@@ -163,7 +163,9 @@ TTS starts on the first complete sentence of the LLM stream; Actor replies are c
 ### 5.4 Language handling
 - Each scenario sets the customer's TTS language and the trainee's STT language.
 - Mid-call switch: the UI shows a language toggle when the customer switches. On toggle, the STT connection is reconnected with the new `lang_code`. Using two parallel STT streams would double cost, so it's out for v1.
-- S1 decides whether Hinglish trainee speech is transcribed better with `hi-IN` or `en-IN`.
+- Hinglish trainee speech uses **`en-IN`** (decided in S1, Oct 11). On a real voice it transcribed Hindi, full English sentences and mixed speech all correctly, as Roman text. `hi-IN` turned English sentences into lossy Devanagari phonetics ("आई दिद्न्त सी युअर माइक"), and agents speak a lot of English. Costs: no punctuation, and Hindi numbers stay as words ("chaudah hazaar…") even with ITN. The LLM judge reads those fine.
+- Real mics produce **empty transcripts** (breaths, noise). The pipeline must drop `text == ""` before starting a customer turn.
+- A trainee who talks without pausing produces one long, late segment (25 s in testing). Set `x-max-speech-s` (about 15) so transcripts keep flowing, which also enables the "customer interrupts a monologue" stretch feature.
 
 ### 5.5 LLM layer (ADR-003, decided by spike S3)
 - A small `LLMProvider` interface (stream chat, structured output) with two adapters:
@@ -268,10 +270,10 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 - [x] 🧑 Register on the contest form (personal-email access opens in the 2nd week of October if no institutional email)
 - [x] `git init` inside `gnani/` as its own repo; add `.gitignore` (incl. `.env`) **before** the first commit; create the GitHub repo
 - [x] Scaffold `backend/` (uv, ruff, pyright, pytest)
-- [ ] Scaffold `frontend/` (Vite React TS); CI workflow
+- [x] Scaffold `frontend/` (Vite React TS); CI workflow
 - [ ] **S0 — Access and credit cost.** Run the REST STT and TTS quick starts. Measure the credits used by 60 s of STT and 500 characters of TTS.
   *Exit:* both calls work from a script; credit-per-unit numbers in `docs/spikes/s0.md`.
-- [ ] **S1 — Live STT.** Stream the Mac mic to the raw STT WebSocket with VAD headers.
+- [x] **S1 — Live STT.** Stream the Mac mic to the raw STT WebSocket with VAD headers.
   - Compare `hi-IN` vs `en-IN` on Hinglish speech.
   - Sweep `x-min-silence-ms` 400/600/800.
   - Check whether `pipecat-gnani` lets us set VAD headers.
@@ -348,7 +350,7 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 | R5 | One STT language per connection breaks the language-switch mechanic | Low | Med | Explicit toggle + reconnect; auto-detect is a stretch goal |
 | R6 | Actor breaks character or gets jailbroken | Med | Med | Engine owns state; robustness suite gate |
 | R7 | WebRTC fails on some mobile/corporate networks | Med | Med | TURN server; WebSocket transport fallback |
-| R8 | Pipecat / plugin / LLM SDK incompatibilities (e.g. sampling params on Opus 5.5) | Med | Low | Pin versions; thin adapter layer; S3/S4 surface it early |
+| R8 | Pipecat / plugin / LLM SDK incompatibilities (e.g. sampling params on Opus 5.5) | **Happened** | Low | `pipecat-gnani` breaks on Pipecat 1.12 and conflicts with `websockets` 17 (S1). Own thin Gnani services + pinned versions |
 | R9 | Scope creep | High | High | Non-goals list; stretch features only after the Phase 3 exit |
 | R10 | Eligibility questioned as "just a game" | Low | High | Pitch, README and post lead with the BPO training use case; report card focuses on real skills |
 
