@@ -163,7 +163,9 @@ TTS starts on the first complete sentence of the LLM stream; Actor replies are c
 ### 5.4 Language handling
 - Each scenario sets the customer's TTS language and the trainee's STT language.
 - Mid-call switch: the UI shows a language toggle when the customer switches. On toggle, the STT connection is reconnected with the new `lang_code`. Using two parallel STT streams would double cost, so it's out for v1.
-- Hinglish trainee speech uses **`hi-IN`** (decided in S1): it adds punctuation and writes amounts as ₹ digits, which the judge and engine need. `en-IN` returns Roman text without punctuation.
+- Hinglish trainee speech uses **`en-IN`** (decided in S1, Oct 11). On a real voice it transcribed Hindi, full English sentences and mixed speech all correctly, as Roman text. `hi-IN` turned English sentences into lossy Devanagari phonetics ("आई दिद्न्त सी युअर माइक"), and agents speak a lot of English. Costs: no punctuation, and Hindi numbers stay as words ("chaudah hazaar…") even with ITN. The LLM judge reads those fine.
+- Real mics produce **empty transcripts** (breaths, noise). The pipeline must drop `text == ""` before starting a customer turn.
+- A trainee who talks without pausing produces one long, late segment (25 s in testing). Set `x-max-speech-s` (about 15) so transcripts keep flowing, which also enables the "customer interrupts a monologue" stretch feature.
 
 ### 5.5 LLM layer (ADR-003, decided by spike S3)
 - A small `LLMProvider` interface (stream chat, structured output) with two adapters:

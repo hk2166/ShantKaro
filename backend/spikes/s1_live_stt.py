@@ -3,6 +3,7 @@
 Run from backend/:
   uv run python spikes/s1_live_stt.py                          # live mic, hi-IN, 600 ms
   uv run python spikes/s1_live_stt.py --lang en-IN --silence 400
+  uv run python spikes/s1_live_stt.py --lang en-IN --format transcribe   # numbers as digits
   uv run python spikes/s1_live_stt.py --file out/s1/sentence_00.wav
 """
 
@@ -38,13 +39,14 @@ class Transcript:
     speech_ms: int
 
 
-def stt_headers(lang: str, silence_ms: int) -> dict[str, str]:
+def stt_headers(lang: str, silence_ms: int, fmt: str = "verbatim") -> dict[str, str]:
     return {
         "x-api-key-id": os.environ["GNANI_API_KEY"],
         "lang_code": lang,
         "x-sample-rate": str(SAMPLE_RATE),
         "x-vad-threshold": "0.5",
         "x-min-silence-ms": str(silence_ms),
+        "x-format": fmt,
     }
 
 
@@ -95,11 +97,12 @@ async def transcribe_stream(
     lang: str,
     silence_ms: int,
     on_transcript: Callable[[Transcript], None] = print_transcript,
+    fmt: str = "verbatim",
 ) -> tuple[float, list[Transcript]]:
     """Stream frames to Gnani. Returns when the first frame was sent, and every transcript."""
     transcripts: list[Transcript] = []
     first_frame_at = 0.0
-    async with websockets.connect(URL, additional_headers=stt_headers(lang, silence_ms)) as ws:
+    async with websockets.connect(URL, additional_headers=stt_headers(lang, silence_ms, fmt)) as ws:
         hello = json.loads(await ws.recv())
         if hello.get("type") != "connected":
             raise RuntimeError(f"unexpected first message: {hello}")
@@ -137,12 +140,18 @@ def main() -> None:
     )
     parser.add_argument("--lang", default="hi-IN")
     parser.add_argument("--silence", type=int, default=600, help="x-min-silence-ms")
+    parser.add_argument(
+        "--format",
+        default="verbatim",
+        choices=["verbatim", "transcribe"],
+        help="transcribe turns spoken numbers and money into digits (ITN)",
+    )
     parser.add_argument("--file", type=Path, help="16 kHz mono WAV to stream instead of the mic")
     args = parser.parse_args()
 
     frames = paced_frames(load_pcm(args.file)) if args.file else mic_frames()
     print(f"Streaming {args.file or 'mic'} ({args.lang}, silence {args.silence} ms). Ctrl+C stops.")
-    asyncio.run(transcribe_stream(frames, args.lang, args.silence))
+    asyncio.run(transcribe_stream(frames, args.lang, args.silence, fmt=args.format))
 
 
 if __name__ == "__main__":

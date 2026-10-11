@@ -7,6 +7,7 @@ many sentences came back split into several transcripts.
 
 Run from backend/:
   uv run python spikes/s1_experiment.py hi-IN:600 en-IN:600
+  uv run python spikes/s1_experiment.py en-IN:500:transcribe    # with ITN
 """
 
 import asyncio
@@ -92,10 +93,10 @@ def build_stream(clips: list[bytes]) -> tuple[bytes, list[tuple[float, float]]]:
 
 
 async def run_setting(
-    audio: bytes, spans: list[tuple[float, float]], lang: str, silence_ms: int
+    audio: bytes, spans: list[tuple[float, float]], lang: str, silence_ms: int, fmt: str
 ) -> dict:
     started, transcripts = await transcribe_stream(
-        paced_frames(audio), lang, silence_ms, on_transcript=lambda _: None
+        paced_frames(audio), lang, silence_ms, on_transcript=lambda _: None, fmt=fmt
     )
     rows = []
     for index, (start, end) in enumerate(spans):
@@ -113,6 +114,7 @@ async def run_setting(
     return {
         "lang": lang,
         "silence_ms": silence_ms,
+        "format": fmt,
         "median_delay_ms": statistics.median(delays) if delays else None,
         "max_delay_ms": max(delays) if delays else None,
         "split_sentences": sum(len(row["transcripts"]) > 1 for row in rows),
@@ -122,7 +124,7 @@ async def run_setting(
 
 
 def print_result(result: dict) -> None:
-    print(f"\n=== {result['lang']}, silence {result['silence_ms']} ms ===")
+    print(f"\n=== {result['lang']}, silence {result['silence_ms']} ms, {result['format']} ===")
     for index, row in enumerate(result["rows"]):
         texts = " | ".join(row["transcripts"]) or "(nothing)"
         print(f"{index:2d}. {row['delay_ms']} ms  {texts}")
@@ -132,15 +134,24 @@ def print_result(result: dict) -> None:
     )
 
 
+def parse_setting(arg: str) -> tuple[str, int, str]:
+    """Parse 'lang:silence_ms[:format]', e.g. 'en-IN:500:transcribe'."""
+    lang, silence_ms, *rest = arg.split(":")
+    return lang, int(silence_ms), rest[0] if rest else "verbatim"
+
+
 def main() -> None:
-    settings = [(lang, int(ms)) for lang, ms in (arg.split(":") for arg in sys.argv[1:])]
+    settings = [parse_setting(arg) for arg in sys.argv[1:]]
     clips = load_sentences()
     audio, spans = build_stream(clips)
     print(f"{len(clips)} sentences, {len(audio) / 2 / SAMPLE_RATE:.0f} s of audio per setting")
-    for lang, silence_ms in settings or [("hi-IN", 600), ("en-IN", 600)]:
-        result = asyncio.run(run_setting(audio, spans, lang, silence_ms))
+    for lang, silence_ms, fmt in settings or [
+        ("hi-IN", 600, "verbatim"),
+        ("en-IN", 600, "verbatim"),
+    ]:
+        result = asyncio.run(run_setting(audio, spans, lang, silence_ms, fmt))
         print_result(result)
-        path = OUT / f"result_{lang}_{silence_ms}.json"
+        path = OUT / f"result_{lang}_{silence_ms}_{fmt}.json"
         path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
         time.sleep(2)
 
