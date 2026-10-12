@@ -69,6 +69,7 @@ Verified from docs.gnani.ai on Oct 6 2026. Re-check if something behaves differe
 - One synthesis request at a time per connection; base64 audio chunks; `complete` message at the end.
 - Controls: `voice` (42 voices), `language` (incl. `hi-en` Hinglish, `auto`), `speed` 0.85–1.15. **No SSML or emotion parameter is documented** → anger must come from voice choice, speed and how lines are written (risk R1).
 - Numbers, IDs and currency should be passed as spoken words (Input Formatting Guide).
+- **S2 finding (Oct 12):** `container="mp3"` at 24 kHz returns HTTP 500 once the audio is a few seconds long. WAV at 24 kHz and MP3 at 16 kHz work. The game uses raw PCM over WebSocket, but any TTS call needs a fallback for 5xx errors so a call never goes silent.
 
 **Integrations:** `pipecat-gnani` (tested with Pipecat v1.5.0; WebSocket TTS is an `InterruptibleTTSService` → barge-in support) and `livekit-plugins-gnani`.
 - **S1 finding (Oct 11):** `pipecat-gnani` 0.5.12 can't set VAD headers, crashes on import with Pipecat 1.12 (`_NotGiven`), and pins `websockets<16` (we use 17.2). Plan: write our own thin Gnani STT/TTS services for Pipecat (Day 14).
