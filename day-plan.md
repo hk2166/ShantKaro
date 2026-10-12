@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 11):** Days 1–3 done. Open: S0/S1 STT cost on the dashboard, and trying your own voice with `s1_live_stt.py`. Next: Day 4.
+**Progress (Oct 12):** Days 1–3 done; Day 4 scripts done. Open for you: send the S2 clips to raters, ask Discord about emotion control and rate limits, get an LLM API key, check STT cost on the dashboard. Next: Day 5.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -82,14 +82,14 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 **Done when:** you see your own speech transcribed live, and you've picked a language code and a silence value.
 
 ### Day 4 · Fri Oct 9 · Can Timbre sound angry? (spike S2) + LLM timing script
-- [ ] `backend/spikes/s2_anger.py`: generate one angry line per persona, each in 3 voices at speeds 1.0, 1.08 and 1.15 (27 clips). Use random file names plus a hidden answer key.
+- [x] `backend/spikes/s2_anger.py`: generate one angry line per persona, each in 3 voices at speeds 1.0, 1.08 and 1.15 (27 clips). Use random file names plus a hidden answer key.
   - Sharma Uncle: Omkar, Hemraj, Jalaj
   - Lakshmi Aunty: Noopur, Trisha, Vedika
   - Rohan: Kavin, Girish, Shlok
 - [ ] 🧑 Send the clips to 3 friends to rate 1–5 for "sounds like a genuinely annoyed customer"
 - [ ] 🧑 Ask in the Gnani Discord whether Timbre v2.5 has any emotion, style or SSML control
 - [ ] 🧑 Get an LLM API key (decision §11.2)
-- [ ] `backend/spikes/s3_llm.py`: stream one reply and print time to first token and time to first full sentence
+- [x] `backend/spikes/s3_llm.py`: stream one reply and print time to first token and time to first full sentence
 
 **Done when:** clips are with your raters, and the timing script works for one model.
 
