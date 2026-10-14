@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 12):** Days 1–3 done; Day 4 scripts done. Open for you: send the S2 clips to raters, ask Discord about emotion control and rate limits, get an LLM API key, check STT cost on the dashboard. Next: Day 5.
+**Progress (Oct 14):** Days 1–5 done, except the S3 model comparison (waits for an Anthropic API key). Day 6: ADRs done, voice tests pending. Days 7–8 done, plus Day 12's two scenario files. Open for you: Anthropic API key, S2 ratings, talking to the echo bot, Discord questions, STT cost on the dashboard. Next: Day 9.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -122,22 +122,22 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 All code goes in `backend/src/shant/`.
 
 ### Day 7 · Mon Oct 12 · Scenario files
-- [ ] `scenarios/schema.py`: pydantic models with these fields:
+- [x] `scenarios/schema.py`: pydantic models with these fields:
   - persona
   - policy (allowed remedies, forbidden promises)
   - grievance facts
   - voice config (voice, TTS and STT language, speed per anger band)
   - opening lines
   - tag weights
-- [ ] `scenarios/sharma_uncle.yaml`: fictional company BharatKart, Hinglish, refund pending 3 weeks
-- [ ] `scenarios/loader.py` + tests: every YAML in `scenarios/` validates, and a broken file fails with a clear error
+- [x] `scenarios/sharma_uncle.yaml`: fictional company BharatKart, Hinglish, refund pending 3 weeks
+- [x] `scenarios/loader.py` + tests: every YAML in `scenarios/` validates, and a broken file fails with a clear error
 
 **Done when:** tests load and validate scenario 1.
 
 ### Day 8 · Tue Oct 13 · Game engine
-- [ ] `engine/state.py`: `GameState` (anger 0–100, strikes, resolution, turn count, elapsed time, status)
-- [ ] `engine/rules.py`: a pure function `apply(state, judgement, scenario) -> GameState`, plus the end conditions from §4.1
-- [ ] Unit tests for each rule + hypothesis property tests (§7.1)
+- [x] `engine/state.py`: `GameState` (anger 0–100, strikes, resolution, turn count, elapsed time, status)
+- [x] `engine/rules.py`: a pure function `apply(state, judgement, scenario) -> GameState`, plus the end conditions from §4.1
+- [x] Unit tests for each rule + hypothesis property tests (§7.1)
 
 **Done when:** `engine/` has full test coverage and imports nothing that does I/O.
 
@@ -163,8 +163,8 @@ All code goes in `backend/src/shant/`.
 **Done when:** you can win and lose against Sharma Uncle in the terminal.
 
 ### Day 12 · Sat Oct 17 · Other scenarios + report card
-- [ ] `scenarios/lakshmi_aunty.yaml`: JhatPat food delivery, Tamil + English, switches to Tamil when upset
-- [ ] `scenarios/rohan.yaml`: Sahyog Bank double charge of ₹14,999; promising an instant reversal is forbidden
+- [x] `scenarios/lakshmi_aunty.yaml` (done early, on Day 7): JhatPat food delivery, Tamil + English, switches to Tamil when upset
+- [x] `scenarios/rohan.yaml` (done early, on Day 7): Sahyog Bank double charge of ₹14,999; promising an instant reversal is forbidden
 - [ ] `agents/reporter.py`: rubric scores (§4.2), best and worst line, 2 coaching tips
 - [ ] Play scenarios 2 and 3 in the CLI
 
