@@ -72,7 +72,7 @@ Verified from docs.gnani.ai on Oct 6 2026. Re-check if something behaves differe
 - **S2 finding (Oct 12):** `container="mp3"` at 24 kHz returns HTTP 500 once the audio is a few seconds long. WAV at 24 kHz and MP3 at 16 kHz work. The game uses raw PCM over WebSocket, but any TTS call needs a fallback for 5xx errors so a call never goes silent.
 
 **Integrations:** `pipecat-gnani` (tested with Pipecat v1.5.0; WebSocket TTS is an `InterruptibleTTSService` → barge-in support) and `livekit-plugins-gnani`.
-- **S1 finding (Oct 11):** `pipecat-gnani` 0.5.12 can't set VAD headers, crashes on import with Pipecat 1.12 (`_NotGiven`), and pins `websockets<16` (we use 17.2). Plan: write our own thin Gnani STT/TTS services for Pipecat (Day 14).
+- **S1 finding (Oct 11):** `pipecat-gnani` 0.5.12 can't set VAD headers, crashes on import with Pipecat 1.12 (`_NotGiven`), and pins `websockets<16` (we use 17.2). **Revised Oct 14 (ADR-001):** pinning `pipecat-ai==1.5.0` makes the plugin work, with `websockets` at 15.0.1. Use the plugin, and subclass its STT service to add the VAD headers.
 
 **Evon v3.3:** not on the API platform. BF16, A100/H100-class GPU, served via vLLM ≥ 0.12 (OpenAI-compatible). Will not run on our M3 Pro / 18 GB laptop.
 
@@ -351,7 +351,7 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 | R5 | One STT language per connection breaks the language-switch mechanic | Low | Med | Explicit toggle + reconnect; auto-detect is a stretch goal |
 | R6 | Actor breaks character or gets jailbroken | Med | Med | Engine owns state; robustness suite gate |
 | R7 | WebRTC fails on some mobile/corporate networks | Med | Med | TURN server; WebSocket transport fallback |
-| R8 | Pipecat / plugin / LLM SDK incompatibilities (e.g. sampling params on Opus 5.5) | **Happened** | Low | `pipecat-gnani` breaks on Pipecat 1.12 and conflicts with `websockets` 17 (S1). Own thin Gnani services + pinned versions |
+| R8 | Pipecat / plugin / LLM SDK incompatibilities (e.g. sampling params on Opus 5.5) | **Happened** | Low | `pipecat-gnani` breaks on Pipecat 1.12 (S1). Pinned Pipecat 1.5.0 + `websockets` 15 (ADR-001). Pipecat 1.5's Anthropic service predates Opus 5.5 (pass effort via `extra`) |
 | R9 | Scope creep | High | High | Non-goals list; stretch features only after the Phase 3 exit |
 | R10 | Eligibility questioned as "just a game" | Low | High | Pitch, README and post lead with the BPO training use case; report card focuses on real skills |
 
