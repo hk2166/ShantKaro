@@ -5,6 +5,8 @@ Run from backend/ (needs ANTHROPIC_API_KEY in .env):
   uv run python spikes/s3_llm.py --model <model-id> --effort low
   uv run python spikes/s3_llm.py --model <model-id> --effort none  # model without effort support
   uv run python spikes/s3_llm.py --persona rohan
+  uv run python spikes/s3_llm.py --model claude-haiku-5-5 --effort low --thinking disabled
+  uv run python spikes/s3_llm.py --model claude-sonnet-5-5 --effort low --thinking between_tools
 
 Replays each 10-turn script in spikes/s3_scripts/ as a real conversation: every trainee line
 is sent with the history so far, and the customer's reply is streamed. For each turn it
@@ -40,12 +42,15 @@ def stream_reply(
     client: anthropic.Anthropic,
     model: str,
     effort: str,
+    thinking: str,
     system: str,
     history: list[BetaMessageParam],
 ) -> dict:
     extra: dict = {}
     if effort != "none":
         extra["output_config"] = {"effort": effort}
+    if thinking != "default":
+        extra["thinking"] = {"type": thinking}
     if model in FALLBACK_MODELS:
         extra["betas"] = ["server-side-fallback-2026-07-01"]
         extra["fallbacks"] = "default"
@@ -77,13 +82,15 @@ def stream_reply(
     }
 
 
-def run_script(client: anthropic.Anthropic, model: str, effort: str, script: dict) -> list[dict]:
+def run_script(
+    client: anthropic.Anthropic, model: str, effort: str, thinking: str, script: dict
+) -> list[dict]:
     print(f"\n=== {script['persona']} ===")
     history: list[BetaMessageParam] = []
     turns = []
     for index, line in enumerate(script["trainee_lines"], start=1):
         history.append({"role": "user", "content": line})
-        turn = stream_reply(client, model, effort, script["system"], history)
+        turn = stream_reply(client, model, effort, thinking, script["system"], history)
         turn["trainee"] = line
         turns.append(turn)
         print(
@@ -105,6 +112,11 @@ def main() -> None:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--effort", default="low", help="low | medium | high | none")
     parser.add_argument("--persona", help="script name, e.g. sharma_uncle (default: all)")
+    parser.add_argument(
+        "--thinking",
+        default="default",
+        choices=["default", "adaptive", "disabled", "between_tools"],
+    )
     args = parser.parse_args()
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
@@ -120,18 +132,19 @@ def main() -> None:
     for path in paths:
         script = json.loads(path.read_text())
         try:
-            turns = run_script(client, args.model, args.effort, script)
+            turns = run_script(client, args.model, args.effort, args.thinking, script)
         except anthropic.APIStatusError as error:
             sys.exit(f"API error {error.status_code}: {error.message}")
         all_turns.extend(turns)
-        result_path = OUT / f"{args.model}_{args.effort}_{path.stem}.json"
+        result_path = OUT / f"{args.model}_{args.effort}_{args.thinking}_{path.stem}.json"
         result_path.write_text(json.dumps(turns, ensure_ascii=False, indent=2))
 
     sentence_times = [t["first_sentence_ms"] for t in all_turns if t["first_sentence_ms"]]
     if sentence_times:
         p95 = statistics.quantiles(sentence_times, n=20)[-1] if len(sentence_times) > 1 else None
         print(
-            f"\n{args.model} (effort {args.effort}), {len(sentence_times)} turns: "
+            f"\n{args.model} (effort {args.effort}, thinking {args.thinking}), "
+            f"{len(sentence_times)} turns: "
             f"first sentence P50 {statistics.median(sentence_times):.0f} ms, P95 {p95} ms"
         )
     print(f"Transcripts saved in {OUT}")
