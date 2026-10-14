@@ -94,14 +94,14 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 **Done when:** clips are with your raters, and the timing script works for one model.
 
 ### Day 5 · Sat Oct 10 · Pick the LLM (spike S3) + start Pipecat (spike S4)
-- [ ] Write a 10-turn scripted conversation for each persona (`backend/spikes/s3_scripts/`)
+- [x] Write a 10-turn scripted conversation for each persona (`backend/spikes/s3_scripts/`)
 - [ ] Run each candidate model on all three scripts:
   - Candidates: the default Claude Opus 5.5 at `low` effort vs a faster one, e.g. Claude Haiku 4.5.
   - Record the P50 time to first sentence.
   - Rate the replies 1–5 for "in character, natural code-mixing, short".
 - [ ] Write `docs/adr/003-llm-provider.md`: which model and why (§5.5 lists the gotchas)
-- [ ] Install Pipecat pinned to the version `pipecat-gnani` is tested with (v1.5.0), plus `pipecat-gnani`
-- [ ] Run the plugin's foundational example locally
+- [x] Install Pipecat pinned to the version `pipecat-gnani` is tested with (v1.5.0), plus `pipecat-gnani`
+- [x] Run the plugin's foundational example locally (as `spikes/s4_echo_bot.py`: same structure, but it echoes instead of calling an LLM, since there's no key yet)
 
 **Done when:** ADR-003 is written and the Pipecat example runs.
 
@@ -110,7 +110,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - [ ] Barge-in: talk over the bot; it should stop speaking
 - [ ] Open it on your phone through a tunnel (e.g. cloudflared). Does WebRTC connect?
 - [ ] Collect the S2 ratings → choose a voice and speeds per persona → `docs/spikes/s2.md`
-- [ ] Write `docs/adr/001-pipecat-vs-livekit.md` and `docs/adr/004-transport.md`
+- [x] Write `docs/adr/001-pipecat-vs-livekit.md` and `docs/adr/004-transport.md`
 - [ ] Optional: build-in-public post #1 ("building a voice trainer for call-centre agents on Gnani AI")
 
 **Done when:** you've had a spoken conversation with your bot on your laptop and your phone.

@@ -1,0 +1,16 @@
+{
+  "persona": "Rohan",
+  "system": "You are Rohan, a 27-year-old software engineer in Bengaluru, on a support call with Sahyog Bank about your credit card. A ₹14,999 purchase was charged twice yesterday, and you've been on hold for 40 minutes. You're sharp and sarcastic, you threaten to post about it on X, and you push the agent to promise an instant reversal today. You calm down when the agent is honest about the real timeline and takes concrete action. You speak English, sometimes with Bengaluru slang like guru or swalpa adjust maadi.\n\nSay only what you would say out loud on the phone: one to three short sentences, in Latin letters only. No stage directions, emojis or formatting.",
+  "trainee_lines": [
+    "good evening sir this is arjun from sahyog bank cards how may i help you",
+    "i understand sir could you please confirm the last four digits of your card",
+    "thank you sir i can see two transactions of fourteen thousand nine hundred ninety nine rupees",
+    "sir please dont worry i will reverse it right now today itself",
+    "sorry sir let me correct that i have raised a dispute for the duplicate charge",
+    "the duplicate amount will be credited back within five to seven working days",
+    "i have also flagged the transaction so it cannot be charged again",
+    "your dispute reference number is s b d seven seven one two",
+    "i completely understand your frustration about the hold time sir i am sorry",
+    "is there anything else i can help you with today"
+  ]
+}
