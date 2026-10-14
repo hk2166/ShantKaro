@@ -10,3 +10,7 @@ out/
 
 # private learning notes, never committed
 docs/spikes/
+
+# test coverage data
+.coverage
+htmlcov/
