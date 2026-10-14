@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 14):** Days 1–5 done, except the S3 model comparison (waits for an Anthropic API key). Day 6: ADRs done, voice tests pending. Days 7–8 done, plus Day 12's two scenario files. Open for you: Anthropic API key, S2 ratings, talking to the echo bot, Discord questions, STT cost on the dashboard. Next: Day 9.
+**Progress (Oct 14):** Days 1–5 done. Day 6: ADRs done, voice tests pending. Days 7–9 done, plus Day 12's two scenario files. Open for you: S2 ratings, talking to the echo bot, Discord questions, STT cost on the dashboard. Next: Day 10 (the Judge).
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -142,9 +142,9 @@ All code goes in `backend/src/shant/`.
 **Done when:** `engine/` has full test coverage and imports nothing that does I/O.
 
 ### Day 9 · Wed Oct 14 · LLM layer + the customer (Actor)
-- [ ] `llm/provider.py`: a small interface (stream text, structured output) + the adapter you chose in ADR-003
-- [ ] `agents/actor.py`: build the customer prompt from the scenario and the anger band, using the style guide in §5.3. Prompts live in `agents/prompts/*.md`.
-- [ ] `voice/formatter.py`: numbers, ₹ amounts and order IDs → spoken words; strip markdown and emoji. Add tests.
+- [x] `llm/provider.py`: a small interface (stream text, structured output) + the adapter you chose in ADR-003 (`llm/claude.py`; structured output comes with the Judge on Day 10)
+- [x] `agents/actor.py`: build the customer prompt from the scenario and the anger band, using the style guide in §5.3. Prompts live in `agents/prompts/*.md`.
+- [x] `voice/formatter.py`: strip markdown, stage directions, emoji and wrapping quotes. Add tests. (Numbers to words isn't needed: Gnani's TTS normalises numbers, ₹ and IDs itself.)
 
 **Done when:** a quick script prints an in-character reply at anger 30 and at anger 90, and they sound clearly different.
 
