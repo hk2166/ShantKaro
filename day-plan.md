@@ -95,11 +95,11 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 
 ### Day 5 · Sat Oct 10 · Pick the LLM (spike S3) + start Pipecat (spike S4)
 - [x] Write a 10-turn scripted conversation for each persona (`backend/spikes/s3_scripts/`)
-- [ ] Run each candidate model on all three scripts:
+- [x] Run each candidate model on all three scripts:
   - Candidates: the default Claude Opus 5.5 at `low` effort vs a faster one, e.g. Claude Haiku 4.5.
   - Record the P50 time to first sentence.
   - Rate the replies 1–5 for "in character, natural code-mixing, short".
-- [ ] Write `docs/adr/003-llm-provider.md`: which model and why (§5.5 lists the gotchas)
+- [x] Write `docs/adr/003-llm-provider.md`: which model and why (§5.5 lists the gotchas)
 - [x] Install Pipecat pinned to the version `pipecat-gnani` is tested with (v1.5.0), plus `pipecat-gnani`
 - [x] Run the plugin's foundational example locally (as `spikes/s4_echo_bot.py`: same structure, but it echoes instead of calling an LLM, since there's no key yet)
 

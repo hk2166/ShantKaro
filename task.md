@@ -172,7 +172,7 @@ TTS starts on the first complete sentence of the LLM stream; Actor replies are c
 - A small `LLMProvider` interface (stream chat, structured output) with two adapters:
   - Anthropic SDK
   - OpenAI-compatible, for Evon on vLLM
-- Default candidate: **Claude Opus 5.5 at `low` effort**. It must be compared in S3 against a faster model (e.g. Claude Haiku 4.5) on time-to-first-sentence and Hinglish role-play quality. Final pick is Hemant's, based on the numbers.
+- **Decided (ADR-003, Oct 14): Claude Sonnet 5.5, effort `low`, thinking `between_tools`.** First sentence P50 1,102 ms / P95 1,614 ms in S3. Opus 5.5 was too slow (2.6 s / 7.4 s), and Haiku 5.5 wrote Hindi in Roman letters.
 - Opus 5.5 gotchas to handle in the adapter:
   - Thinking can't be disabled (use `low` effort).
   - `temperature`/`top_p` are rejected with a 400. Make sure the Pipecat LLM service doesn't send them.
@@ -357,7 +357,7 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 
 ## 11. Open decisions (Hemant)
 1. **Solo or duo?** A duo doubles reach for the engagement-based shortlist. If duo, split ownership: voice pipeline + backend vs frontend + game design + evals. Record contributions as you go.
-2. **LLM provider:** decided after S3 numbers (default candidate Claude Opus 5.5 at low effort vs a faster option). Needs an API key and a small budget.
+2. ~~**LLM provider**~~: decided, Claude Sonnet 5.5 (ADR-003).
 3. **Evon "sovereign mode":** worth renting an A100/H100 for demo day? Decide after Phase 3.
 4. **Hosting budget:** backend host + possibly a TURN service.
 
