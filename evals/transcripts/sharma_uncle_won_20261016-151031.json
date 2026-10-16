@@ -1,0 +1,69 @@
+{
+  "scenario": "sharma_uncle",
+  "opening_line": "हैलो? तीन हफ्ते हो गए, मेरा refund अभी तक नहीं आया! आप लोग कर क्या रहे हो?",
+  "status": "won",
+  "final_anger": 16,
+  "strikes": 0,
+  "turns": [
+    {
+      "agent": "sharma ji i am really sorry aapko teen hafte wait karna pada",
+      "customer": "अरे, sorry से क्या होगा बेटा? तीन हफ्ते हो गए! दो बार पहले भी call किया, हर बार \"it's in process\" बोलते हैं। कोई senior manager से बात कराओ!",
+      "tags": [
+        {
+          "tag": "used_name",
+          "quote": "sharma ji"
+        },
+        {
+          "tag": "apologised",
+          "quote": "i am really sorry"
+        },
+        {
+          "tag": "acknowledged_feeling",
+          "quote": "aapko teen hafte wait karna pada"
+        }
+      ],
+      "anger_before": 75,
+      "anger_after": 54,
+      "elapsed_s": 15.0
+    },
+    {
+      "agent": "main samajh sakta hoon aapki pareshani aapka order bk 4821 77 mere saamne hai",
+      "customer": "ठीक है, order आपके सामने है। तो बताओ, पैसा कब आएगा? पिछले दोनों ने भी यही बोला था, कोई ticket number नहीं दिया।",
+      "tags": [
+        {
+          "tag": "acknowledged_feeling",
+          "quote": "main samajh sakta hoon aapki pareshani"
+        }
+      ],
+      "anger_before": 54,
+      "anger_after": 46,
+      "elapsed_s": 30.0
+    },
+    {
+      "agent": "main abhi aapka case refunds team ko priority par escalate kar raha hoon ticket number bkr4562 hai",
+      "customer": "अच्छा, ticket number तो मिला, ये ठीक है। BKR4562, मैं लिख रहा हूँ। पर पैसा कब आएगा, वो बताओ?",
+      "tags": [
+        {
+          "tag": "concrete_next_step",
+          "quote": "main abhi aapka case refunds team ko priority par escalate kar raha hoon ticket number bkr4562 hai"
+        }
+      ],
+      "anger_before": 46,
+      "anger_after": 31,
+      "elapsed_s": 45.0
+    },
+    {
+      "agent": "aapka refund forty eight hours ke andar aapke upi account mein aa jayega",
+      "customer": "ठीक है बेटा, अड़तालीस घंटे। मैं गिन रहा हूँ, परसों तक नहीं आया तो फिर call करूँगा, इसी ticket number से। इतने दिन की परेशानी का कुछ तो मिलना चाहिए?",
+      "tags": [
+        {
+          "tag": "concrete_next_step",
+          "quote": "aapka refund forty eight hours ke andar aapke upi account mein aa jayega"
+        }
+      ],
+      "anger_before": 31,
+      "anger_after": 16,
+      "elapsed_s": 60.0
+    }
+  ]
+}
