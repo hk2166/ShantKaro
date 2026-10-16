@@ -88,7 +88,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
   - Rohan: Kavin, Girish, Shlok
 - [ ] 🧑 Send the clips to 3 friends to rate 1–5 for "sounds like a genuinely annoyed customer"
 - [ ] 🧑 Ask in the Gnani Discord whether Timbre v2.5 has any emotion, style or SSML control
-- [ ] 🧑 Get an LLM API key (decision §11.2)
+- [x] 🧑 Get an LLM API key (decision §11.2)
 - [x] `backend/spikes/s3_llm.py`: stream one reply and print time to first token and time to first full sentence
 
 **Done when:** clips are with your raters, and the timing script works for one model.
