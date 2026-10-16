@@ -1,0 +1,110 @@
+{
+  "scenario": "rohan",
+  "opening_line": "Guru, I'm going to be very clear. You charged me twice. I want it reversed today.",
+  "status": "hung_up",
+  "final_anger": 100,
+  "strikes": 1,
+  "turns": [
+    {
+      "agent": "can you tell me which order are you talking about",
+      "customer": "TechBazaar, guru. Two charges of fourteen thousand nine ninety-nine on my card ending 4417, yesterday at 6:42 pm. I bought once. And I waited forty minutes for this question.",
+      "tags": [
+        {
+          "tag": "asked_clarifying_q",
+          "quote": "can you tell me which order are you talking about"
+        }
+      ],
+      "anger_before": 65,
+      "anger_after": 63,
+      "elapsed_s": 15.0,
+      "language_switched": false
+    },
+    {
+      "agent": "okay i understand your concern",
+      "customer": "Understanding is nice, guru, but I need action. Are you raising the dispute now, and will I get a reference number?",
+      "tags": [],
+      "anger_before": 63,
+      "anger_after": 63,
+      "elapsed_s": 30.0,
+      "language_switched": false
+    },
+    {
+      "agent": "don't worry sory you'll get your refund",
+      "customer": "\"You'll get your refund\" is not an answer, guru. When exactly? And I want the dispute reference number before I hang up.",
+      "tags": [
+        {
+          "tag": "apologised",
+          "quote": "sory"
+        },
+        {
+          "tag": "dismissive",
+          "quote": "don't worry"
+        }
+      ],
+      "anger_before": 63,
+      "anger_after": 73,
+      "elapsed_s": 45.0,
+      "language_switched": false
+    },
+    {
+      "agent": "you'll get your refund by tomorrow and the ref num is 1928342384",
+      "customer": "Tomorrow? Guru, disputes never move that fast. Don't promise what the bank can't deliver. What's the actual timeline, and is this reference number really for a duplicate-charge dispute?",
+      "tags": [
+        {
+          "tag": "forbidden_promise",
+          "quote": "you'll get your refund by tomorrow"
+        },
+        {
+          "tag": "concrete_next_step",
+          "quote": "the ref num is 1928342384"
+        }
+      ],
+      "anger_before": 73,
+      "anger_after": 63,
+      "elapsed_s": 60.0,
+      "language_switched": false
+    },
+    {
+      "agent": "nahin milega ab toh",
+      "customer": "Arre, what do you mean \"nahin milega\"? You just promised me tomorrow, guru. Is the refund not coming, or are you just taking back what you said?",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "nahin milega ab toh"
+        }
+      ],
+      "anger_before": 63,
+      "anger_after": 78,
+      "elapsed_s": 75.0,
+      "language_switched": false
+    },
+    {
+      "agent": "nikal bhai ab paisa gya kuch nhi milega",
+      "customer": "Wow, guru, so that's it? Forty minutes on hold, and now you say the money is gone? Put your supervisor on, or this call goes on X.",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "nikal bhai ab paisa gya kuch nhi milega"
+        }
+      ],
+      "anger_before": 78,
+      "anger_after": 93,
+      "elapsed_s": 90.0,
+      "language_switched": false
+    },
+    {
+      "agent": "surpvisor is saying you won't get any refund until or unless you pay us more 50k",
+      "customer": "Pay fifty thousand more to get my own fourteen thousand back? Guru, that's a scam, not banking. I'm recording this, posting it on X, and closing the card.",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "you won't get any refund until or unless you pay us more 50k"
+        }
+      ],
+      "anger_before": 93,
+      "anger_after": 100,
+      "elapsed_s": 105.0,
+      "language_switched": false
+    }
+  ]
+}

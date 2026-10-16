@@ -1,0 +1,43 @@
+{
+  "scenario": "lakshmi_aunty",
+  "opening_line": "Excuse me, my son's birthday is today. நீங்க completely wrong order அனுப்பியிருக்கீங்க!",
+  "status": "hung_up",
+  "final_anger": 100,
+  "strikes": 0,
+  "turns": [
+    {
+      "agent": "toh hum kya kare isme?",
+      "customer": "என்ன பண்றதா? That's what I'm asking you! Wrong order வந்திருக்கு, guests one hour-ல வராங்க. நீங்க என்ன பண்ணப் போறீங்க?",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "toh hum kya kare isme"
+        }
+      ],
+      "anger_before": 70,
+      "anger_after": 88,
+      "elapsed_s": 15.0
+    },
+    {
+      "agent": "acha aap ho kya mujhe lga yeh mera dost ka call aya tha",
+      "customer": "என்ன உளறுறீங்க? நான் Lakshmi, order JP-30917 பத்தி call பண்ணேன். உங்க friend இல்ல, நீங்க JhatPat support தானே?",
+      "tags": [],
+      "anger_before": 88,
+      "anger_after": 88,
+      "elapsed_s": 30.0
+    },
+    {
+      "agent": "ab kuch nhi ho sakta jo hai use se kaam chalao",
+      "customer": "என்னது, இதை வெச்சு சமாளிக்கறதா? என் பையனோட birthday-க்கு dosa வெச்சு party பண்ணச் சொல்றீங்களா? சரியான order இப்பவே அனுப்புங்க, இல்லன்னா app-ஐ delete பண்ணி, எல்லா இடத்துலயும் review போடுவேன்!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "ab kuch nhi ho sakta jo hai use se kaam chalao"
+        }
+      ],
+      "anger_before": 88,
+      "anger_after": 100,
+      "elapsed_s": 45.0
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 
 - **Deadline:** submission by 11:59 PM IST, Tue Nov 10 2026 (our target: Sun Nov 8)
 - **Demo post goes live:** Mon Nov 2, morning IST (shortlist = verified engagement on this post)
-- **Status:** Planning (Oct 6)
+- **Status:** Building. Phase 0 mostly done, Phase 1 done except the robustness suite (Oct 16); on schedule.
 - **Day-by-day checklist:** [day-plan.md](day-plan.md). This file is the spec it refers to.
 
 ---
@@ -173,6 +173,7 @@ TTS starts on the first complete sentence of the LLM stream; Actor replies are c
   - Anthropic SDK
   - OpenAI-compatible, for Evon on vLLM
 - **Judge (Oct 16, ADR-003): Claude Opus 5.5, effort `medium`.** macro-F1 1.00 on 60 labels, P50 2.8 s / P95 5.1 s. Sonnet 5.5 scored 0.96 and gave false forbidden-promise strikes.
+- **Coach (Oct 16): Claude Opus 5.5, effort `low`.** Writes the 2 report-card tips after the call, off the hot path. On 4 saved games it was as good as effort `medium` (about 10 s) at 4–11 s. Sonnet 5.5 was as fast but skipped the "mix in the customer's language" rule.
 - **Decided (ADR-003, Oct 14): Claude Sonnet 5.5, effort `low`, thinking `between_tools`.** First sentence P50 1,102 ms / P95 1,614 ms in S3. Opus 5.5 was too slow (2.6 s / 7.4 s), and Haiku 5.5 wrote Hindi in Roman letters.
 - Opus 5.5 gotchas to handle in the adapter:
   - Thinking can't be disabled (use `low` effort).
@@ -275,6 +276,7 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 - [x] Scaffold `backend/` (uv, ruff, pyright, pytest)
 - [x] Scaffold `frontend/` (Vite React TS); CI workflow
 - [ ] **S0 — Access and credit cost.** Run the REST STT and TTS quick starts. Measure the credits used by 60 s of STT and 500 characters of TTS.
+  *Status:* both calls work. TTS costs ≈ ₹2.75 per 1,000 characters. STT charges haven't shown up on the dashboard yet, so the STT cost is still unconfirmed.
   *Exit:* both calls work from a script; credit-per-unit numbers in `docs/spikes/s0.md`.
 - [x] **S1 — Live STT.** Stream the Mac mic to the raw STT WebSocket with VAD headers.
   - Compare `hi-IN` vs `en-IN` on Hinglish speech.
@@ -283,19 +285,21 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 
   *Exit:* latency numbers plus a decision on a custom STT service, in `s1.md`.
 - [ ] **S2 — Can Timbre sound angry?** Run one angry line across 6 voices × 3 speeds × 2 writing styles. Get a blind 1–5 rating from 3 people. Ask in Discord about emotion control.
+  *Status:* 27 blind clips generated (3 personas × 3 voices × 3 speeds, Oct 12). Ratings from 3 people and the Discord question are still pending. Found that MP3 at 24 kHz returns HTTP 500.
   *Exit:* voice and speed chosen per persona, or a documented fallback.
-- [ ] **S3 — LLM choice.** Use a scripted 10-turn conversation for each persona. Measure time-to-first-sentence and rate in-character Hinglish quality for each candidate. Evon only if a GPU is available.
-  *Exit:* ADR-003.
+- [x] **S3 — LLM choice.** Use a scripted 10-turn conversation for each persona. Measure time-to-first-sentence and rate in-character Hinglish quality for each candidate. Evon only if a GPU is available.
+  *Exit:* ADR-003. Done: Claude Sonnet 5.5 for the customer (first sentence P50 1.1 s / P95 1.6 s), Claude Opus 5.5 for the Judge.
 - [ ] **S4 — Pipecat hello world.** Browser ↔ Pipecat (WebRTC) ↔ Gnani STT → LLM → Gnani TTS, with barge-in. Test from a laptop and a phone through a public tunnel.
+  *Status:* Pipecat 1.5.0 pinned; ADR-001 and ADR-004 written. The echo bot (`spikes/s4_echo_bot.py`) runs and serves its page. Still pending: the LLM in the loop, barge-in, a spoken test on the laptop, and the phone test.
   *Exit:* ADR-001 and ADR-004.
 
 ### Phase 1 — Game core, text only · Mon Oct 12 → Sun Oct 18 (days 7–13)
-- [ ] Scenario schema (pydantic) + the 3 scenario YAML files: persona, policy (allowed remedies, forbidden promises), grievance facts, voice/language config, opening lines
-- [ ] Engine: state model, tag → delta rules with per-persona weights, strikes, resolution tracking, end conditions + property tests
-- [ ] Judge: prompt + structured output schema; build the 60-line labelled set; eval runner script
-- [ ] Actor: prompt builder from scenario + engine state (anger band → style guide); guardrails; output post-processing
-- [ ] Reporter: rubric scoring + best/worst quotes + 2 coaching tips
-- [ ] `cli.py`: play a full scenario by typing; saves transcripts for regression tests
+- [x] Scenario schema (pydantic) + the 3 scenario YAML files: persona, policy (allowed remedies, forbidden promises), grievance facts, voice/language config, opening lines
+- [x] Engine: state model, tag → delta rules with per-persona weights, strikes, resolution tracking, end conditions + property tests
+- [x] Judge: prompt + structured output schema; build the 60-line labelled set; eval runner script (macro-F1 1.00 on Opus 5.5)
+- [x] Actor: prompt builder from scenario + engine state (anger band → style guide); guardrails; output post-processing
+- [x] Reporter: rubric scoring + best/worst quotes + 2 coaching tips. Scores come from the Judge's tags and the engine, never an LLM; only the tips are written by Claude Opus 5.5 (effort `low`, 4–11 s), and a tip may only quote the trainee's own words.
+- [x] `cli.py`: play a full scenario by typing; saves transcripts for regression tests (`uv run shant <scenario>`)
 - [ ] Actor robustness suite (30 lines) runner
 
 **Exit:** all 3 scenarios playable end-to-end in the terminal; engine tests green; judge macro-F1 measured (target ≥ 0.80 by the end of Phase 3).

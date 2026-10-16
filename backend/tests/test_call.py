@@ -96,6 +96,7 @@ def test_the_transcript_is_plain_json() -> None:
     data = json.loads(json.dumps(call.transcript(), ensure_ascii=False))
     assert data["scenario"] == "sharma_uncle"
     assert data["turns"][0]["tags"] == [{"tag": "apologised", "quote": "really sorry"}]
+    assert data["turns"][0]["language_switched"] is False
 
 
 @pytest.mark.parametrize("path", TRANSCRIPTS, ids=lambda p: p.stem)

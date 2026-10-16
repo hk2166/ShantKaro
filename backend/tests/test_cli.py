@@ -3,10 +3,11 @@ from collections.abc import Iterator
 from dataclasses import replace
 
 import pytest
-from fakes import ScriptedActor, ScriptedJudge
+from fakes import ScriptedActor, ScriptedCoach, ScriptedJudge
 
 from shant.agents.judge import TagEvidence, Verdict
-from shant.cli import brief, meter, outcome, play
+from shant.agents.reporter import Tip
+from shant.cli import brief, debrief, meter, outcome, play
 from shant.engine.state import Status
 from shant.game.call import Call
 from shant.scenarios.loader import load_all
@@ -101,3 +102,28 @@ def test_a_refused_reply_lets_the_trainee_try_again(
     call = asyncio.run(play(SHARMA, 15, ScriptedActor([], fail=True), ScriptedJudge([])))
     assert "went quiet" in capsys.readouterr().out
     assert call.turns == []
+
+
+def one_turn_call() -> Call:
+    sorry = Verdict(tags=[TagEvidence(tag=Tag.APOLOGISED, quote="really sorry")])
+    call = Call(SHARMA, ScriptedActor(["achha"]), ScriptedJudge([sorry]), "hello")
+    asyncio.run(call.respond("i am really sorry", 15))
+    return call
+
+
+def test_debrief_shows_the_report_card_then_the_tips(capsys) -> None:
+    advice = Tip(quote="really sorry", advice="Use his name too.", try_saying="sorry sharma ji")
+    tips = asyncio.run(debrief(one_turn_call(), ScriptedCoach([advice])))
+    out = capsys.readouterr().out
+    assert "=== Report card: " in out
+    assert "language adaptation  not tested in this call" in out
+    assert 'Best line: "i am really sorry" (apologised; anger 75 → 65)' in out
+    assert '1. "really sorry" → Use his name too.' in out
+    assert tips == [advice]
+
+
+def test_the_report_card_still_shows_when_the_coach_declines(capsys) -> None:
+    assert asyncio.run(debrief(one_turn_call(), ScriptedCoach([], fail=True))) == []
+    out = capsys.readouterr().out
+    assert "Report card" in out
+    assert "nothing to say" in out
