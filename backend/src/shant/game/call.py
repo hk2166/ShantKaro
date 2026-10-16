@@ -30,6 +30,7 @@ class TurnRecord:
     anger_before: int
     anger_after: int
     elapsed_s: float
+    language_switched: bool
 
 
 class Call:
@@ -58,16 +59,12 @@ class Call:
         if self.state.finished:
             raise CallOverError(f"the call already ended: {self.state.status}")
         customer_before = self.last_customer_line
+        switched = self.state.language_switched
         self.history.append(Message("user", agent_line))
         verdict_task = asyncio.create_task(
-            judge(
-                self._judge_llm,
-                self.scenario,
-                customer_before,
-                agent_line,
-                self.state.language_switched,
-            )
+            judge(self._judge_llm, self.scenario, customer_before, agent_line, switched)
         )
+
         chunks: list[str] = []
         try:
             async for chunk in self.actor.reply(self.state, self.history):
@@ -84,7 +81,7 @@ class Call:
         anger_before = self.state.anger
         self.state = apply(self.state, verdict.judgement(), self.scenario, elapsed_s)
         record = TurnRecord(
-            agent_line, customer, verdict, anger_before, self.state.anger, elapsed_s
+            agent_line, customer, verdict, anger_before, self.state.anger, elapsed_s, switched
         )
         self.turns.append(record)
         return record
@@ -110,6 +107,7 @@ class Call:
                     "anger_before": turn.anger_before,
                     "anger_after": turn.anger_after,
                     "elapsed_s": turn.elapsed_s,
+                    "language_switched": turn.language_switched,
                 }
                 for turn in self.turns
             ],

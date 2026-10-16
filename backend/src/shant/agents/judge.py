@@ -19,16 +19,21 @@ class TagEvidence(BaseModel):
     quote: str
 
 
+def normalise(text: str) -> str:
+    """Lowercase and collapse whitespace, so we can check if a quote is in a line."""
+    return " ".join(text.lower().split())
+
+
 class Verdict(BaseModel):
     tags: list[TagEvidence]
 
     def grounded_in(self, agent_line: str) -> "Verdict":
         """Drop tags whose quote doesn't actually appear in the agent's line."""
-        line = " ".join(agent_line.lower().split())
+        line = normalise(agent_line)
         kept = [
             evidence
             for evidence in self.tags
-            if (quote := " ".join(evidence.quote.lower().split())) and quote in line
+            if (quote := normalise(evidence.quote)) and quote in line
         ]
         return Verdict(tags=kept)
 

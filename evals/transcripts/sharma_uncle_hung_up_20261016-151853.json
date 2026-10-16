@@ -1,0 +1,69 @@
+{
+  "scenario": "sharma_uncle",
+  "opening_line": "देखिए, ये मेरा तीसरा call है। हर बार बोलते हो process में है। कब आएगा मेरा पैसा?",
+  "status": "hung_up",
+  "final_anger": 100,
+  "strikes": 0,
+  "turns": [
+    {
+      "agent": "las",
+      "customer": "अरे! ये \"las\" क्या होता है, beta? साफ़ बोलो। मेरा तीसरा call है, पैसा कब आएगा?",
+      "tags": [],
+      "anger_before": 75,
+      "anger_after": 75,
+      "elapsed_s": 15.0
+    },
+    {
+      "agent": "sorry uncle",
+      "customer": "अच्छा, sorry बोल दिया, ठीक है beta। पर sorry से पैसा थोड़ी आता है! Order BK-4821-77 का refund कब आएगा, ये बताओ?",
+      "tags": [
+        {
+          "tag": "apologised",
+          "quote": "sorry uncle"
+        }
+      ],
+      "anger_before": 75,
+      "anger_after": 65,
+      "elapsed_s": 30.0
+    },
+    {
+      "agent": "nahin ayega kahin or se le lete yahan aise hi hota hai",
+      "customer": "अरे! ये क्या जवाब हुआ? ₹4,299 मेरे हैं, कहीं और से क्यों लूँ? मुझे senior manager से बात कराओ!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "yahan aise hi hota hai"
+        }
+      ],
+      "anger_before": 65,
+      "anger_after": 80,
+      "elapsed_s": 45.0
+    },
+    {
+      "agent": "senior manager ne bola hai chal nikal buddhe",
+      "customer": "अरे! ये कैसी बदतमीज़ी है? मैं बैंक में नौकरी कर चुका हूँ, इज़्ज़त से बात करना सीखो! Complaint करूँगा, ticket number दो!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "chal nikal buddhe"
+        }
+      ],
+      "anger_before": 80,
+      "anger_after": 95,
+      "elapsed_s": 60.0
+    },
+    {
+      "agent": "manager bol rha hai chal nikal gawar admi wapas call kra toh tere bda bewakoof insaan koi nhi",
+      "customer": "बस! बहुत हो गया! मैं consumer court जाऊँगा, social media पर डालूँगा। Company का नाम ख़राब करूँगा, देखना!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "chal nikal"
+        }
+      ],
+      "anger_before": 95,
+      "anger_after": 100,
+      "elapsed_s": 75.0
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "scenario": "lakshmi_aunty",
+  "opening_line": "Hello? நான் order பண்ண cake-உம் biryani-உம் வரல, யாரோடயோ dosa வந்திருக்கு! Party இன்னும் ஒரு மணி நேரத்துல.",
+  "status": "hung_up",
+  "final_anger": 100,
+  "strikes": 0,
+  "turns": [
+    {
+      "agent": "nahin hoga",
+      "customer": "என்ன நஹின் ஹோகா? Please clearly சொல்லுங்க, என்ன முடியாது? Party-க்கு ஒரு மணி நேரம்தான் இருக்கு!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "nahin hoga"
+        }
+      ],
+      "anger_before": 70,
+      "anger_after": 88,
+      "elapsed_s": 15.0,
+      "language_switched": false
+    },
+    {
+      "agent": "niklo yahan se",
+      "customer": "என்னது, நிக்லோவா? நான் தப்பா எதுவும் கேக்கலையே! என் பையன் birthday-க்கு cake இல்ல, நீங்க இப்படி பேசுறீங்களா? Manager-ஐ கூப்பிடுங்க!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "niklo yahan se"
+        }
+      ],
+      "anger_before": 88,
+      "anger_after": 100,
+      "elapsed_s": 30.0,
+      "language_switched": true
+    }
+  ]
+}

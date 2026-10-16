@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator, Sequence
 
 from shant.agents.judge import Verdict
+from shant.agents.reporter import Coaching, Tip
 from shant.llm.provider import LLMRefusalError, Message, T
 
 
@@ -30,3 +31,16 @@ class ScriptedJudge:
     async def parse(self, system: str, messages: Sequence[Message], schema: type[T]) -> T:
         self.calls.append(list(messages))
         return schema.model_validate(self.verdicts.pop(0).model_dump())
+
+
+class ScriptedCoach:
+    """Returns the given tips, or refuses like a model that declined to answer."""
+
+    def __init__(self, tips: list[Tip], fail: bool = False) -> None:
+        self.tips = tips
+        self.fail = fail
+
+    async def parse(self, system: str, messages: Sequence[Message], schema: type[T]) -> T:
+        if self.fail:
+            raise LLMRefusalError("declined")
+        return schema.model_validate(Coaching(tips=self.tips).model_dump())

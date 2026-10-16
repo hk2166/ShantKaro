@@ -26,6 +26,10 @@ JUDGE_SETTINGS = ClaudeSettings(
     model="claude-opus-5-5", effort="medium", thinking=None, max_tokens=8000
 )
 
+COACH_SETTINGS = ClaudeSettings(
+    model="claude-opus-5-5", effort="low", thinking=None, max_tokens=8000
+)
+
 
 def request_params(
     settings: ClaudeSettings, system: str, messages: Sequence[Message]

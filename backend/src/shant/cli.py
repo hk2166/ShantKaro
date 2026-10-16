@@ -17,9 +17,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from shant.agents.reporter import Scores, Tip, best_line, coach, score, worst_line
 from shant.engine.state import Status
 from shant.game.call import Call
-from shant.llm.claude import JUDGE_SETTINGS, ClaudeLLM
+from shant.llm.claude import COACH_SETTINGS, JUDGE_SETTINGS, ClaudeLLM
 from shant.llm.provider import LLM, LLMRefusalError, StructuredLLM
 from shant.scenarios.loader import load_all
 from shant.scenarios.schema import Scenario
@@ -28,15 +29,20 @@ ROOT = Path(__file__).resolve().parents[3]
 TRANSCRIPTS = ROOT / "evals" / "transcripts"
 METER_WIDTH = 20
 
+SCORE_WIDTH = 10
+
+
+def bar(value: int, width: int) -> str:
+    filled = round(value / 100 * width)
+    return "█" * filled + "░" * (width - filled)
+
 
 def meter(call: Call, elapsed_s: float) -> str:
     state, dynamics = call.state, call.scenario.dynamics
-    filled = round(state.anger / 100 * METER_WIDTH)
-    bar = "█" * filled + "░" * (METER_WIDTH - filled)
     clock = f"{int(elapsed_s) // 60}:{int(elapsed_s) % 60:02d}"
     limit = f"{dynamics.time_limit_s // 60}:{dynamics.time_limit_s % 60:02d}"
     return (
-        f"anger [{bar}] {state.anger:3d} · {clock} / {limit} · "
+        f"anger [{bar(state.anger, METER_WIDTH)}] {state.anger:3d} · {clock} / {limit} · "
         f"strikes {state.strikes}/{dynamics.max_strikes}"
     )
 
@@ -117,6 +123,45 @@ async def play(
     return call
 
 
+def report_card(call: Call, scores: Scores) -> str:
+    lines = [f"\n=== Report card: {scores.total}/100 ==="]
+    for name, value in vars(scores).items():
+        label = name.replace("_", " ")
+        if value is None:
+            lines.append(f"  {label:<20} not tested in this call")
+        else:
+            lines.append(f"  {label:<20} {bar(value, SCORE_WIDTH)} {value:3d}")
+    for title, turn in (("Best line", best_line(call)), ("Worst line", worst_line(call))):
+        if turn is not None:
+            tags = ", ".join(evidence.tag for evidence in turn.verdict.tags)
+            lines.append(
+                f'{title}: "{turn.agent}" ({tags}; anger {turn.anger_before} → {turn.anger_after})'
+            )
+    return "\n".join(lines)
+
+
+def tips_text(tips: list[Tip]) -> str:
+    lines = ["\nCoaching tips:"]
+    for number, tip in enumerate(tips, start=1):
+        about = f'"{tip.quote}" → ' if tip.quote else ""
+        lines += [f"  {number}. {about}{tip.advice}", f"     Try: {tip.try_saying}"]
+    return "\n".join(lines)
+
+
+async def debrief(call: Call, coach_llm: StructuredLLM | None = None) -> list[Tip]:
+    """Show the scores straight away, then the coaching tips once the LLM has written them."""
+    scores = score(call)
+    print(report_card(call, scores))
+    print("\nYour coach is writing tips...")
+    try:
+        tips = await coach(coach_llm or ClaudeLLM(COACH_SETTINGS), call, scores)
+    except LLMRefusalError:
+        print("(the coach had nothing to say this time)")
+        return []
+    print(tips_text(tips))
+    return tips
+
+
 def save(call: Call) -> Path:
     TRANSCRIPTS.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
@@ -137,8 +182,12 @@ def main() -> None:
     args = parser.parse_args()
 
     call = asyncio.run(play(scenarios[args.scenario], args.seconds_per_turn))
-    if call.turns and not args.no_save:
+    if not call.turns:
+        return
+    # Save first, so the transcript survives even if the coach's API call fails.
+    if not args.no_save:
         print(f"Transcript saved to {save(call)}")
+    asyncio.run(debrief(call))
 
 
 if __name__ == "__main__":
