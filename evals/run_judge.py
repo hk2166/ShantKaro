@@ -37,6 +37,11 @@ load_dotenv(ROOT / ".env")
 
 
 def load_labels(path: Path) -> list[dict]:
+    if not path.exists():
+        sys.exit(
+            f"No labels file at {path}. Write it first (one JSON object per line), "
+            "starting from evals/judge_labels.example.jsonl."
+        )
     rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
     scenarios = load_all()
     for row in rows:
