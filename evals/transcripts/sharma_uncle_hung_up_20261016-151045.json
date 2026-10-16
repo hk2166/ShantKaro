@@ -1,0 +1,35 @@
+{
+  "scenario": "sharma_uncle",
+  "opening_line": "देखिए, ये मेरा तीसरा call है। हर बार बोलते हो process में है। कब आएगा मेरा पैसा?",
+  "status": "hung_up",
+  "final_anger": 100,
+  "strikes": 0,
+  "turns": [
+    {
+      "agent": "sir refund process mein hai thoda wait kar lijiye",
+      "customer": "अरे! फिर वही \"process में है\"! Teen हफ्ते हो गए, अब कितना wait करूँ? Senior manager से बात कराओ मेरी!",
+      "tags": [
+        {
+          "tag": "dismissive",
+          "quote": "refund process mein hai thoda wait kar lijiye"
+        }
+      ],
+      "anger_before": 75,
+      "anger_after": 90,
+      "elapsed_s": 15.0
+    },
+    {
+      "agent": "sir shayad aapne return ke time galat bank details di hongi",
+      "customer": "अरे, मुझे ही blame कर रहे हो? UPI से pay किया था, bank details कौन सी? Warehouse ने भी confirm कर दिया है!",
+      "tags": [
+        {
+          "tag": "blamed_customer",
+          "quote": "shayad aapne return ke time galat bank details di hongi"
+        }
+      ],
+      "anger_before": 90,
+      "anger_after": 100,
+      "elapsed_s": 30.0
+    }
+  ]
+}

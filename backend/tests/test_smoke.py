@@ -1,4 +1,4 @@
-from shant import main
+from shant.cli import main
 
 
 def test_package_imports() -> None:

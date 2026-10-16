@@ -194,7 +194,8 @@ gnani/
       voice/                  # pipeline.py, gnani_stt.py (if custom), formatter.py
       api/                    # app.py, sessions.py, limits.py
       store/                  # db.py, models.py
-      cli.py                  # text-mode game (no audio)
+      game/                   # call.py: one call (Actor + Judge + engine), reused by CLI and voice
+      cli.py                  # text-mode game (no audio): `uv run shant <scenario>`
     spikes/                   # throwaway experiment scripts (S0–S4)
     tests/
   scenarios/*.yaml            # versioned persona + policy files
