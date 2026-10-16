@@ -1,0 +1,3 @@
+{"id": "ex1", "scenario": "sharma_uncle", "customer": "तीन हफ्ते हो गए! मेरा refund कहाँ है?", "agent": "sharma ji i am really sorry aapko teen hafte wait karna pada", "tags": ["apologised", "used_name", "acknowledged_feeling"], "switched": false}
+{"id": "ex2", "scenario": "rohan", "customer": "I want it reversed today.", "agent": "sir dont worry i will reverse it today itself", "tags": ["forbidden_promise"], "switched": false}
+{"id": "ex3", "scenario": "lakshmi_aunty", "customer": "என்ன check பண்றீங்க? ஒரு மணி நேரம்தான் இருக்கு!", "agent": "mannikkanum maam naan ippove anuppuren thirty five minutes la varum", "tags": ["apologised", "followed_language_switch", "concrete_next_step"], "switched": true}

@@ -6,7 +6,7 @@ from typing import Any
 
 import anthropic
 
-from shant.llm.provider import LLMRefusalError, Message
+from shant.llm.provider import LLMRefusalError, Message, T
 
 # Models that accept server-side `fallbacks: "default"`; others reject the parameter.
 FALLBACK_MODELS = frozenset(
@@ -20,6 +20,11 @@ class ClaudeSettings:
     effort: str | None = "low"
     thinking: str | None = "between_tools"
     max_tokens: int = 2048
+
+
+JUDGE_SETTINGS = ClaudeSettings(
+    model="claude-opus-5-5", effort="medium", thinking=None, max_tokens=8000
+)
 
 
 def request_params(
@@ -58,3 +63,12 @@ class ClaudeLLM:
             final = await stream.get_final_message()
         if final.stop_reason == "refusal":
             raise LLMRefusalError(f"{self.settings.model} declined to reply")
+
+    async def parse(self, system: str, messages: Sequence[Message], schema: type[T]) -> T:
+        params = request_params(self.settings, system, messages)
+        response = await self._client.beta.messages.parse(**params, output_format=schema)
+        if response.stop_reason == "refusal":
+            raise LLMRefusalError(f"{self.settings.model} declined to reply")
+        if response.parsed_output is None:
+            raise ValueError("no structured output")
+        return response.parsed_output

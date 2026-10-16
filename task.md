@@ -172,6 +172,7 @@ TTS starts on the first complete sentence of the LLM stream; Actor replies are c
 - A small `LLMProvider` interface (stream chat, structured output) with two adapters:
   - Anthropic SDK
   - OpenAI-compatible, for Evon on vLLM
+- **Judge (Oct 16, ADR-003): Claude Opus 5.5, effort `medium`.** macro-F1 1.00 on 60 labels, P50 2.8 s / P95 5.1 s. Sonnet 5.5 scored 0.96 and gave false forbidden-promise strikes.
 - **Decided (ADR-003, Oct 14): Claude Sonnet 5.5, effort `low`, thinking `between_tools`.** First sentence P50 1,102 ms / P95 1,614 ms in S3. Opus 5.5 was too slow (2.6 s / 7.4 s), and Haiku 5.5 wrote Hindi in Roman letters.
 - Opus 5.5 gotchas to handle in the adapter:
   - Thinking can't be disabled (use `low` effort).

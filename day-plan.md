@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 14):** Days 1–5 done. Day 6: ADRs done, voice tests pending. Days 7–9 done, plus Day 12's two scenario files. Open for you: S2 ratings, talking to the echo bot, Discord questions, STT cost on the dashboard. Next: Day 10 (the Judge).
+**Progress (Oct 16):** Days 1–5 and 7–10 done, plus Day 12's two scenario files. Day 6: ADRs done, voice tests pending. One day behind; Day 13's buffer catches up. Open for you: S2 ratings, talking to the echo bot (laptop + phone), Discord questions, STT cost on the dashboard. Next: Day 11 (play it in the terminal).
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -88,7 +88,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
   - Rohan: Kavin, Girish, Shlok
 - [ ] 🧑 Send the clips to 3 friends to rate 1–5 for "sounds like a genuinely annoyed customer"
 - [ ] 🧑 Ask in the Gnani Discord whether Timbre v2.5 has any emotion, style or SSML control
-- [ ] 🧑 Get an LLM API key (decision §11.2)
+- [x] 🧑 Get an LLM API key (decision §11.2)
 - [x] `backend/spikes/s3_llm.py`: stream one reply and print time to first token and time to first full sentence
 
 **Done when:** clips are with your raters, and the timing script works for one model.
@@ -149,9 +149,9 @@ All code goes in `backend/src/shant/`.
 **Done when:** a quick script prints an in-character reply at anger 30 and at anger 90, and they sound clearly different.
 
 ### Day 10 · Thu Oct 15 · The Judge
-- [ ] `agents/judge.py`: structured output of behaviour tags + an evidence quote (tag list in §5.1)
-- [ ] Write 60 labelled trainee lines → `evals/judge_labels.jsonl`, mixing Hinglish, English, Tamil-English and Kannada-English
-- [ ] `evals/run_judge.py`: per-tag precision/recall + macro-F1
+- [x] `agents/judge.py`: structured output of behaviour tags + an evidence quote (tag list in §5.1)
+- [x] Write 60 labelled trainee lines → `evals/judge_labels.jsonl`, mixing Hinglish, English, Tamil-English and Kannada-English
+- [x] `evals/run_judge.py`: per-tag precision/recall + macro-F1 (Opus 5.5 medium: **1.00**, P50 2.8 s / P95 5.1 s; Sonnet 5.5: 0.96)
 
 **Done when:** your first judge F1 number is written down. The target is ≥ 0.80 by Day 24.
 
