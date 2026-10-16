@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 16):** Days 1–5 and 7–10 done, plus Day 12's two scenario files. Day 6: ADRs done, voice tests pending. One day behind; Day 13's buffer catches up. Open for you: S2 ratings, talking to the echo bot (laptop + phone), Discord questions, STT cost on the dashboard. Next: Day 11 (play it in the terminal).
+**Progress (Oct 16):** Days 1–5 and 7–11 done, plus Day 12's two scenario files. Day 6: ADRs done, voice tests pending. Back on schedule. Open for you: play the terminal game yourself, S2 ratings, talking to the echo bot (laptop + phone), Discord questions, STT cost on the dashboard. Next: Day 12 (report card).
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -156,9 +156,9 @@ All code goes in `backend/src/shant/`.
 **Done when:** your first judge F1 number is written down. The target is ≥ 0.80 by Day 24.
 
 ### Day 11 · Fri Oct 16 · Play it in the terminal
-- [ ] `cli.py`: you type as the agent → the Actor replies → the Judge labels your line → the Engine updates → the anger meter prints
-- [ ] Play scenario 1 to a win and to a loss; save the transcripts in `evals/transcripts/`
-- [ ] Add an end-to-end test that replays a saved transcript with the LLM calls mocked
+- [x] `cli.py` (`uv run shant <scenario>`, built on `game/call.py`): you type as the agent → the Actor replies → the Judge labels your line → the Engine updates → the anger meter prints
+- [x] Play scenario 1 to a win and to a loss; save the transcripts in `evals/transcripts/` (two scripted games; play your own too)
+- [x] Add an end-to-end test that replays a saved transcript with the LLM calls mocked
 
 **Done when:** you can win and lose against Sharma Uncle in the terminal.
 
