@@ -117,7 +117,7 @@ def main() -> None:
     print(f"\n{len(mismatches)} mismatches:")
     for row, want, got, verdict in mismatches:
         quotes = "; ".join(f"{e.tag}: {e.quote!r}" for e in verdict.tags)
-        print(f"- {row['id']}: expected {sorted(want)} got {sorted(got)}")
+        print(f"- {row['id']}: expected {sorted(map(str, want))} got {sorted(map(str, got))}")
         print(f"    agent: {row['agent']}")
         print(f"    quotes: {quotes or '(none)'}")
 
