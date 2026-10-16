@@ -46,5 +46,12 @@ Use **Claude Sonnet 5.5** (`claude-sonnet-5-5`) for the customer, with:
   - start TTS on the first clause (comma) instead of the first full sentence;
   - cache the system prompt;
   - deploy the bot close to the API.
-- **The Judge can use a different model.** It runs off the hot path while the customer is speaking (§5.1), so it can afford Opus-level quality. That's decided on Day 10.
+- **The Judge uses Claude Opus 5.5 (effort `medium`), decided Oct 16.** It runs off the hot path while the customer is speaking (§5.1). On 60 hand-labelled lines (`evals/judge_labels.jsonl`):
+
+  | Judge model | macro-F1 | P50 | P95 | Wrong `forbidden_promise` |
+  |---|---|---|---|---|
+  | Opus 5.5, medium | **1.00** | 2.8 s | 5.1 s | none |
+  | Sonnet 5.5, low, `between_tools` | 0.96 | 1.6 s | 2.4 s | 2 |
+
+  Sonnet is faster, but it twice tagged an allowed fix ("i am raising the dispute right now") as a forbidden promise. That gives the trainee a strike for doing the right thing, and Rohan hangs up after two. A meter that updates a turn late is a smaller harm than an unfair strike. Caveat: the prompt was tuned against these same 60 lines, so 1.00 is optimistic; confirm on a fresh batch of labels.
 - **Re-run S3** if the Actor prompt changes substantially, or when a new model version ships.
