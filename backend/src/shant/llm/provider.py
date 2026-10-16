@@ -2,7 +2,11 @@
 
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Literal, Protocol, TypeVar
+
+from pydantic import BaseModel
+
+T = TypeVar("T", bound=BaseModel)
 
 
 @dataclass(frozen=True)
@@ -18,4 +22,10 @@ class LLMRefusalError(Exception):
 class LLM(Protocol):
     def stream(self, system: str, messages: Sequence[Message]) -> AsyncIterator[str]:
         """Yield the reply's text as it's generated."""
+        ...
+
+
+class StructuredLLM(Protocol):
+    async def parse(self, system: str, messages: Sequence[Message], schema: type[T]) -> T:
+        """Return the reply as a validated instance of `schema`."""
         ...

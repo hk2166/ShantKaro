@@ -3,8 +3,9 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from pydantic import BaseModel
 
-from shant.llm.claude import ClaudeLLM, ClaudeSettings, request_params
+from shant.llm.claude import JUDGE_SETTINGS, ClaudeLLM, ClaudeSettings, request_params
 from shant.llm.provider import LLMRefusalError, Message
 
 HISTORY = [Message("user", "hello"), Message("assistant", "hi"), Message("user", "sorry")]
@@ -85,3 +86,40 @@ def test_a_refusal_raises_after_the_stream() -> None:
     client, _ = fake_client(FakeStream([], "refusal"))
     with pytest.raises(LLMRefusalError):
         asyncio.run(collect(ClaudeLLM(client=client)))
+
+
+class Answer(BaseModel):
+    ok: bool
+
+
+def fake_parse_client(parsed: Answer | None, stop_reason: str) -> tuple[Any, list[dict]]:
+    calls: list[dict] = []
+
+    async def parse(**params: Any) -> SimpleNamespace:
+        calls.append(params)
+        return SimpleNamespace(parsed_output=parsed, stop_reason=stop_reason)
+
+    client = SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(parse=parse)))
+    return cast(Any, client), calls
+
+
+def test_parse_returns_the_validated_object_and_sends_the_schema() -> None:
+    client, calls = fake_parse_client(Answer(ok=True), "end_turn")
+    result = asyncio.run(ClaudeLLM(JUDGE_SETTINGS, client).parse("s", HISTORY, Answer))
+    assert result == Answer(ok=True)
+    assert calls[0]["output_format"] is Answer
+    assert calls[0]["model"] == "claude-opus-5-5"
+    assert calls[0]["output_config"] == {"effort": "medium"}
+    assert "thinking" not in calls[0]
+
+
+def test_parse_raises_on_a_refusal() -> None:
+    client, _ = fake_parse_client(None, "refusal")
+    with pytest.raises(LLMRefusalError):
+        asyncio.run(ClaudeLLM(JUDGE_SETTINGS, client).parse("s", HISTORY, Answer))
+
+
+def test_parse_raises_when_nothing_was_parsed() -> None:
+    client, _ = fake_parse_client(None, "end_turn")
+    with pytest.raises(ValueError, match="no structured output"):
+        asyncio.run(ClaudeLLM(JUDGE_SETTINGS, client).parse("s", HISTORY, Answer))
