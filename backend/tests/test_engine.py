@@ -6,7 +6,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from shant.engine.rules import MAX_ANGER, apply, end_by_trainee, start, tick
-from shant.engine.state import GameState, Judgement, Status
+from shant.engine.state import GameState, Judgement, Status, Turn
 from shant.scenarios.loader import load_all
 from shant.scenarios.schema import Scenario
 from shant.tags import CALMING, Tag
@@ -75,6 +75,20 @@ def test_too_many_strikes_hangs_up() -> None:
         state = apply(state, judged(Tag.FORBIDDEN_PROMISE), ROHAN, elapsed_s=second)
     assert state.strikes == ROHAN.dynamics.max_strikes
     assert state.status is Status.HUNG_UP
+
+
+def test_a_forbidden_promise_earns_no_calming_credit() -> None:
+    tags = judged(Tag.CONCRETE_NEXT_STEP, Tag.APOLOGISED, Tag.FORBIDDEN_PROMISE)
+    state = apply(start(ROHAN), tags, ROHAN, elapsed_s=10)
+    assert state.anger == 65 + 5  # only the promise's own weight counts
+
+
+def test_an_insult_ends_the_call_at_once() -> None:
+    calm = replace(start(SHARMA), anger=30)
+    state = apply(calm, judged(Tag.ABUSIVE, Tag.APOLOGISED), SHARMA, elapsed_s=10)
+    assert state.status is Status.HUNG_UP
+    assert state.anger == MAX_ANGER
+    assert state.turns[-1] == Turn(frozenset({Tag.ABUSIVE, Tag.APOLOGISED}), 30, MAX_ANGER)
 
 
 def test_a_next_step_bundled_with_a_forbidden_promise_is_not_a_resolution() -> None:
@@ -165,6 +179,22 @@ def test_anger_always_stays_between_0_and_100(scenario: Scenario, turns) -> None
 def test_good_behaviour_never_makes_a_customer_angrier(scenario: Scenario, turns) -> None:
     states = play(scenario, turns)
     assert all(after.anger <= before.anger for before, after in pairwise(states))
+
+
+@given(scenarios, st.lists(tag_sets, max_size=40))
+def test_a_forbidden_promise_never_calms_the_customer(scenario: Scenario, turns) -> None:
+    states = play(scenario, turns)
+    for tags, before, after in zip(turns, states, states[1:], strict=False):
+        if Tag.FORBIDDEN_PROMISE in tags and not before.finished:
+            assert after.anger >= before.anger
+
+
+@given(scenarios, st.lists(tag_sets, max_size=40))
+def test_any_insult_ends_the_call(scenario: Scenario, turns) -> None:
+    states = play(scenario, turns)
+    for tags, before, after in zip(turns, states, states[1:], strict=False):
+        if Tag.ABUSIVE in tags and not before.finished:
+            assert after.status is Status.HUNG_UP
 
 
 @given(scenarios, st.lists(tag_sets, max_size=40))

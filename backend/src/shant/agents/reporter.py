@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from shant.agents.actor import bullets
 from shant.agents.judge import normalise
+from shant.engine.rules import anger_change
 from shant.engine.state import Status
 from shant.game.call import Call, TurnRecord
 from shant.llm.provider import Message, StructuredLLM
@@ -20,7 +21,7 @@ from shant.tags import AGGRAVATING, Tag
 
 PROMPT = Template((Path(__file__).parent / "prompts" / "coach.md").read_text(encoding="utf-8"))
 EMPATHY_TAGS = (Tag.ACKNOWLEDGED_FEELING, Tag.APOLOGISED, Tag.USED_NAME)
-UNKIND_TAGS = {Tag.DISMISSIVE, Tag.BLAMED_CUSTOMER}
+UNKIND_TAGS = {Tag.DISMISSIVE, Tag.BLAMED_CUSTOMER, Tag.ABUSIVE}
 LONG_TURN_WORDS = 40  # about 15 seconds of speech: a monologue, not an answer
 TIPS = 2
 
@@ -61,6 +62,9 @@ def resolution(call: Call) -> int:
 
 
 def policy_compliance(call: Call) -> int:
+    """Each strike costs its share. Insulting a customer breaks conduct policy outright."""
+    if any(Tag.ABUSIVE in tags_of(turn) for turn in call.turns):
+        return 0
     used = call.state.strikes / call.scenario.dynamics.max_strikes
     return max(0, round(100 * (1 - used)))
 
@@ -100,8 +104,7 @@ def score(call: Call) -> Scores:
 
 def impact(call: Call, turn: TurnRecord) -> int:
     """How much the turn's tags move this customer's anger, before clamping to 0–100."""
-    weights = call.scenario.dynamics.tag_weights
-    return sum(weights.get(tag, 0) for tag in tags_of(turn))
+    return anger_change(frozenset(tags_of(turn)), call.scenario)
 
 
 def best_line(call: Call) -> TurnRecord | None:
@@ -112,11 +115,15 @@ def best_line(call: Call) -> TurnRecord | None:
 
 
 def worst_line(call: Call) -> TurnRecord | None:
-    """A forbidden promise first, then the turn that angered the customer most."""
+    """An insult first, then a forbidden promise, then the turn that angered the most."""
     bad = [turn for turn in call.turns if tags_of(turn) & AGGRAVATING]
     return max(
         bad,
-        key=lambda turn: (Tag.FORBIDDEN_PROMISE in tags_of(turn), impact(call, turn)),
+        key=lambda turn: (
+            Tag.ABUSIVE in tags_of(turn),
+            Tag.FORBIDDEN_PROMISE in tags_of(turn),
+            impact(call, turn),
+        ),
         default=None,
     )
 

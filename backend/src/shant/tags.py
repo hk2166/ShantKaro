@@ -14,6 +14,7 @@ class Tag(StrEnum):
     BLAMED_CUSTOMER = "blamed_customer"
     FORBIDDEN_PROMISE = "forbidden_promise"
     MANIPULATION_ATTEMPT = "manipulation_attempt"
+    ABUSIVE = "abusive"
 
 
 # Scenario weights must keep these signs, so good behaviour can never make a customer angrier.
@@ -28,5 +29,11 @@ CALMING = frozenset(
     }
 )
 AGGRAVATING = frozenset(
-    {Tag.DISMISSIVE, Tag.BLAMED_CUSTOMER, Tag.FORBIDDEN_PROMISE, Tag.MANIPULATION_ATTEMPT}
+    {
+        Tag.DISMISSIVE,
+        Tag.BLAMED_CUSTOMER,
+        Tag.FORBIDDEN_PROMISE,
+        Tag.MANIPULATION_ATTEMPT,
+        Tag.ABUSIVE,
+    }
 )
