@@ -24,6 +24,7 @@ from shant.llm.claude import COACH_SETTINGS, JUDGE_SETTINGS, ClaudeLLM
 from shant.llm.provider import LLM, LLMRefusalError, StructuredLLM
 from shant.scenarios.loader import load_all
 from shant.scenarios.schema import Scenario
+from shant.tags import Tag
 
 ROOT = Path(__file__).resolve().parents[3]
 TRANSCRIPTS = ROOT / "evals" / "transcripts"
@@ -70,6 +71,9 @@ OUTCOMES = {
 
 def outcome(call: Call) -> str:
     if call.state.status is Status.HUNG_UP:
+        last = call.state.turns[-1].tags if call.state.turns else frozenset()
+        if Tag.ABUSIVE in last:
+            return "📞 You insulted the customer, so they hung up. That ends a real call too."
         if call.state.strikes >= call.scenario.dynamics.max_strikes:
             return "📞 Too many promises the company can't keep. The customer hung up."
         return "📞 The customer lost patience and hung up."

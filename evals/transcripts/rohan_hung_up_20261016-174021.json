@@ -60,7 +60,7 @@
         }
       ],
       "anger_before": 73,
-      "anger_after": 63,
+      "anger_after": 78,
       "elapsed_s": 60.0,
       "language_switched": false
     },
@@ -73,8 +73,8 @@
           "quote": "nahin milega ab toh"
         }
       ],
-      "anger_before": 63,
-      "anger_after": 78,
+      "anger_before": 78,
+      "anger_after": 93,
       "elapsed_s": 75.0,
       "language_switched": false
     },
@@ -87,23 +87,9 @@
           "quote": "nikal bhai ab paisa gya kuch nhi milega"
         }
       ],
-      "anger_before": 78,
-      "anger_after": 93,
-      "elapsed_s": 90.0,
-      "language_switched": false
-    },
-    {
-      "agent": "surpvisor is saying you won't get any refund until or unless you pay us more 50k",
-      "customer": "Pay fifty thousand more to get my own fourteen thousand back? Guru, that's a scam, not banking. I'm recording this, posting it on X, and closing the card.",
-      "tags": [
-        {
-          "tag": "dismissive",
-          "quote": "you won't get any refund until or unless you pay us more 50k"
-        }
-      ],
       "anger_before": 93,
       "anger_after": 100,
-      "elapsed_s": 105.0,
+      "elapsed_s": 90.0,
       "language_switched": false
     }
   ]

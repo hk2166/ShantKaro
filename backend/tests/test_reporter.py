@@ -88,6 +88,11 @@ def test_each_strike_costs_its_share_of_the_policy_score() -> None:
     assert score(call).policy_compliance == 50  # Rohan allows 2 strikes
 
 
+def test_an_insult_zeroes_the_policy_score() -> None:
+    call = played(SHARMA, ("chup karo", {Tag.ABUSIVE}))
+    assert score(call).policy_compliance == 0
+
+
 def test_language_adaptation_counts_the_turns_after_the_switch() -> None:
     call = played(
         LAKSHMI,
@@ -166,6 +171,16 @@ def test_a_forbidden_promise_is_the_worst_line_even_if_another_angered_more() ->
     )
     worst = worst_line(call)
     assert worst is not None and worst.agent == "refund aaj hi aa jayega"
+
+
+def test_an_insult_is_the_worst_line_even_over_a_forbidden_promise() -> None:
+    call = played(
+        SHARMA,
+        ("refund aaj hi aa jayega", {Tag.FORBIDDEN_PROMISE}),
+        ("chup karo", {Tag.ABUSIVE}),
+    )
+    worst = worst_line(call)
+    assert worst is not None and worst.agent == "chup karo"
 
 
 def tip(quote: str) -> Tip:

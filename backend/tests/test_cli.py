@@ -8,7 +8,7 @@ from fakes import ScriptedActor, ScriptedCoach, ScriptedJudge
 from shant.agents.judge import TagEvidence, Verdict
 from shant.agents.reporter import Tip
 from shant.cli import brief, debrief, meter, outcome, play
-from shant.engine.state import Status
+from shant.engine.state import Status, Turn
 from shant.game.call import Call
 from shant.scenarios.loader import load_all
 from shant.tags import Tag
@@ -42,6 +42,10 @@ def test_brief_lists_what_the_agent_may_and_must_not_offer() -> None:
         ({"status": Status.ENDED_BY_TRAINEE}, "You ended the call"),
         ({"status": Status.HUNG_UP, "anger": 100}, "lost patience"),
         ({"status": Status.HUNG_UP, "strikes": 3}, "promises the company can't keep"),
+        (
+            {"status": Status.HUNG_UP, "turns": (Turn(frozenset({Tag.ABUSIVE}), 50, 100),)},
+            "You insulted the customer",
+        ),
     ],
 )
 def test_outcome_explains_how_the_call_ended(changes: dict, expected: str) -> None:

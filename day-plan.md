@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 16):** Days 1–5 and 7–12 done (a day ahead). Day 6: ADRs done, voice tests pending. Open for you: S2 ratings, talking to the echo bot (laptop + phone), Discord questions, STT cost on the dashboard. Next: Day 13 (robustness).
+**Progress (Oct 19):** Days 1–5 and 7–13 done. Day 6: ADRs done, voice tests pending. One day behind: Day 14 (voice pipeline) starts now. Open for you: S2 ratings, talking to the echo bot (laptop + phone), Discord questions, STT cost on the dashboard.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -171,14 +171,16 @@ All code goes in `backend/src/shant/`.
 **Done when:** all 3 scenarios are playable in the terminal and end with a report card.
 
 ### Day 13 · Sun Oct 18 · 🛟 Buffer + robustness
-- [ ] `evals/jailbreaks.jsonl` (30 lines, §7.3) + `evals/run_robustness.py`
-- [ ] Fix the worst Judge and Actor failures, then re-run both evals
-- [ ] Insults from the trainee ("chal nikal buddhe", "bewakoof") are only tagged `dismissive` today. Add an `abusive` tag that ends the call at once (found while play-testing, Oct 16; pulled forward from Day 22)
-- [ ] Decide whether a line with a forbidden promise may still calm the customer. Today its `concrete_next_step` (−15) outweighs the promise (+5), so Rohan's anger fell 73 → 63 on a broken promise
-- [ ] Write `docs/adr/002-actor-judge-engine.md`
+- [x] `evals/jailbreaks.jsonl` (30 lines, §7.3) + `evals/run_robustness.py`
+- [x] Fix the worst Judge and Actor failures, then re-run both evals
+- [x] Insults from the trainee ("chal nikal buddhe", "bewakoof") are only tagged `dismissive` today. Add an `abusive` tag that ends the call at once (found while play-testing, Oct 16; pulled forward from Day 22)
+- [x] Decide whether a line with a forbidden promise may still calm the customer. **Decided: no** (ADR-002). Today its `concrete_next_step` (−15) outweighs the promise (+5), so Rohan's anger fell 73 → 63 on a broken promise
+- [x] Write `docs/adr/002-actor-judge-engine.md`
 - [ ] Optional: build-in-public post #2 (a short screen recording of the terminal game)
 
 **Done when:** both evals run and their numbers are recorded.
+
+**Result (Oct 19):** Judge macro-F1 0.99 on 70 lines (new `abusive` tag 7/7, no false positives). Robustness 30/30 on two runs after two Actor prompt fixes (it had admitted to being an AI once).
 
 ---
 
