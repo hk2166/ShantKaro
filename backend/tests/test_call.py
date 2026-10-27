@@ -1,5 +1,6 @@
 import asyncio
 import json
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,7 @@ from fakes import ScriptedActor, ScriptedJudge
 from shant.agents.judge import TagEvidence, Verdict
 from shant.engine.state import GameState, Status
 from shant.game.call import Call, CallOverError
-from shant.llm.provider import LLMRefusalError, Message
+from shant.llm.provider import LLMRefusalError, Message, T
 from shant.scenarios.loader import load_all
 from shant.tags import Tag
 
@@ -66,6 +67,19 @@ def test_the_customer_replies_from_the_state_before_this_turns_judgement() -> No
 def test_stage_directions_are_removed_from_the_saved_reply() -> None:
     call = new_call(["*sighs* theek hai"], [verdict()])
     assert asyncio.run(call.respond("hello", 15)).customer == "theek hai"
+
+
+def test_the_voice_hears_the_reply_is_done_before_the_judge_answers() -> None:
+    reply_done = asyncio.Event()
+
+    class SlowJudge:
+        async def parse(self, system: str, messages: Sequence[Message], schema: type[T]) -> T:
+            await reply_done.wait()  # never answers unless on_reply_done came first
+            return schema.model_validate(SORRY.model_dump())
+
+    call = Call(SHARMA, ScriptedActor(["theek hai"]), SlowJudge(), "opening line")
+    turn = call.respond("i am really sorry", 15, on_reply_done=reply_done.set)
+    assert asyncio.run(asyncio.wait_for(turn, timeout=2)).anger_after == 65
 
 
 def test_a_failed_reply_leaves_the_history_unchanged() -> None:
