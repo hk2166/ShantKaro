@@ -103,3 +103,9 @@ def test_aggravating_tag_cannot_calm_the_customer(tmp_path: Path, sharma: dict) 
     sharma["dynamics"]["tag_weights"]["dismissive"] = -5
     with pytest.raises(ScenarioError, match="dismissive angers the customer"):
         load_scenario(write(tmp_path, sharma))
+
+
+def test_every_ending_needs_a_closing_line(tmp_path: Path, sharma: dict) -> None:
+    sharma["closing_lines"]["timed_out"] = []
+    with pytest.raises(ScenarioError, match="timed_out"):
+        load_scenario(write(tmp_path, sharma))

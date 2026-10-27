@@ -70,3 +70,12 @@ dynamics:
 opening_lines:
   - "Hello? நான் order பண்ண cake-உம் biryani-உம் வரல, யாரோடயோ dosa வந்திருக்கு! Party இன்னும் ஒரு மணி நேரத்துல."
   - "Excuse me, my son's birthday is today. நீங்க completely wrong order அனுப்பியிருக்கீங்க!"
+closing_lines:
+  won:
+    - "சரி, இந்த தடவை ஒழுங்கா பண்ணுங்க. Thank you so much."
+    - "Okay, நம்பறேன். Party-க்கு முன்னாடி வந்தா போதும். Thank you."
+  hung_up:
+    - "போதும்! இனிமே JhatPat-ல order-ஏ பண்ண மாட்டேன்."
+    - "உங்ககிட்ட பேசி ஒரு பயனும் இல்ல. I'm deleting this app!"
+  timed_out:
+    - "எனக்கு நேரமில்ல, guests வந்துடுவாங்க. அப்புறம் call பண்றேன்."

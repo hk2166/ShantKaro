@@ -6,13 +6,14 @@ engine, so the customer's mood follows one turn behind, and the reply is never s
 """
 
 import asyncio
+import random
 from collections.abc import Callable
 from dataclasses import dataclass
 
 from shant.agents.actor import Actor
 from shant.agents.judge import Verdict, judge
 from shant.engine.rules import apply, end_by_trainee, start, tick
-from shant.engine.state import GameState
+from shant.engine.state import GameState, Status
 from shant.llm.provider import LLM, Message, StructuredLLM
 from shant.scenarios.schema import Scenario
 from shant.voice.formatter import for_speech
@@ -98,6 +99,30 @@ class Call:
 
     def hang_up(self) -> None:
         self.state = end_by_trainee(self.state)
+
+    def closing_line(self) -> str | None:
+        """What the customer says as the call ends, or None if they don't get a last word."""
+        endings = self.scenario.closing_lines
+        lines = {
+            Status.WON: endings.won,
+            Status.HUNG_UP: endings.hung_up,
+            Status.TIMED_OUT: endings.timed_out,
+        }.get(self.state.status)
+        return random.choice(lines) if lines else None
+
+    def snapshot(self) -> dict:
+        """What the trainee's screen shows: sent to the browser whenever it changes."""
+        state, dynamics = self.state, self.scenario.dynamics
+        last = self.turns[-1].verdict.tags if self.turns else []
+        return {
+            "anger": state.anger,
+            "strikes": state.strikes,
+            "max_strikes": dynamics.max_strikes,
+            "elapsed_s": round(state.elapsed_s),
+            "time_limit_s": dynamics.time_limit_s,
+            "status": str(state.status),
+            "last_tags": [str(evidence.tag) for evidence in last],
+        }
 
     def transcript(self) -> dict:
         return {

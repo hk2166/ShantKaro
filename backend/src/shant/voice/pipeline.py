@@ -21,14 +21,15 @@ from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
 from pipecat.transcriptions.language import Language
 from pipecat.transports.base_transport import BaseTransport, TransportParams
-from pipecat_gnani import GnaniSTTService, GnaniTTSService
+from pipecat_gnani import GnaniSTTService
 
 from shant.game.call import Call
 from shant.llm.claude import JUDGE_SETTINGS, ClaudeLLM
 from shant.scenarios.loader import load_all
 from shant.scenarios.schema import Scenario
-from shant.voice.customer import Customer
+from shant.voice.customer import Customer, state_message
 from shant.voice.formatter import for_speech
+from shant.voice.gnani_tts import PacedGnaniTTS
 
 ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_SCENARIO = "sharma_uncle"
@@ -41,17 +42,17 @@ transport_params = {
 }
 
 
-def speech_services(scenario: Scenario, api_key: str) -> tuple[GnaniSTTService, GnaniTTSService]:
+def speech_services(scenario: Scenario, api_key: str) -> tuple[GnaniSTTService, PacedGnaniTTS]:
     """Gnani STT for the trainee and TTS in the customer's voice, as the scenario sets them."""
     stt = GnaniSTTService(
         api_key=api_key,
         sample_rate=SAMPLE_RATE,
         settings=GnaniSTTService.Settings(language=Language(scenario.voice.stt_language)),
     )
-    tts = GnaniTTSService(
+    tts = PacedGnaniTTS(
         api_key=api_key,
         sample_rate=SAMPLE_RATE,
-        settings=GnaniTTSService.Settings(
+        settings=PacedGnaniTTS.Settings(
             voice=scenario.voice.tts_voice,
             model=TTS_MODEL,
             language=Language(scenario.voice.tts_language),
@@ -65,7 +66,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments, scenar
         scenario, ClaudeLLM(), ClaudeLLM(JUDGE_SETTINGS), random.choice(scenario.opening_lines)
     )
     stt, tts = speech_services(scenario, os.environ["GNANI_API_KEY"])
-    pipeline = Pipeline([transport.input(), stt, Customer(call), tts, transport.output()])
+    customer = Customer(call, set_speed=tts.set_speed)
+    pipeline = Pipeline([transport.input(), stt, customer, tts, transport.output()])
     task = PipelineTask(
         pipeline,
         params=PipelineParams(enable_metrics=True),
@@ -75,7 +77,9 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments, scenar
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client) -> None:
         logger.info(f"call started with {scenario.persona.name}")
-        await task.queue_frames([TTSSpeakFrame(for_speech(call.actor.opening_line))])
+        await task.queue_frames(
+            [state_message(call), TTSSpeakFrame(for_speech(call.actor.opening_line))]
+        )
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client) -> None:
