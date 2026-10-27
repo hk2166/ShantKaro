@@ -54,8 +54,14 @@ class Call:
         agent_line: str,
         elapsed_s: float,
         on_text: Callable[[str], None] = lambda _: None,
+        on_reply_done: Callable[[], None] = lambda: None,
     ) -> TurnRecord:
-        """Run one turn. `on_text` receives the customer's reply as it streams."""
+        """Run one turn. `on_text` receives the customer's reply as it streams.
+
+        `on_reply_done` is called as soon as the reply has finished streaming, before waiting
+        for the Judge, so a voice can finish speaking without that wait.
+        """
+
         if self.state.finished:
             raise CallOverError(f"the call already ended: {self.state.status}")
         customer_before = self.last_customer_line
@@ -74,6 +80,7 @@ class Call:
             verdict_task.cancel()
             self.history.pop()
             raise
+        on_reply_done()
         customer = for_speech("".join(chunks))
         self.history.append(Message("assistant", customer))
 

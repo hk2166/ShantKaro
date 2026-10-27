@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 19):** Days 1–5 and 7–13 done. Day 6: ADRs done, voice tests pending. One day behind: Day 14 (voice pipeline) starts now. Open for you: S2 ratings, talking to the echo bot (laptop + phone), Discord questions, STT cost on the dashboard.
+**Progress (Oct 27):** Days 1–5 and 7–14 done. Day 6: ADRs done, voice tests pending. Eight days behind: Day 15 is next, and Days 15–21 must be compressed to make the Nov 2 demo post. Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -187,11 +187,13 @@ All code goes in `backend/src/shant/`.
 ## Week 3 — Voice and the web app
 
 ### Day 14 · Mon Oct 19 · Voice pipeline
-- [ ] `voice/pipeline.py`: transport → Gnani STT → turn aggregator → Actor (streaming) → formatter → Gnani TTS (persona voice)
-  - Use a custom STT service with VAD headers if S1 showed you need one.
-- [ ] Run scenario 1 by voice using Pipecat's built-in dev client
+- [x] `voice/pipeline.py`: transport → Gnani STT → turn aggregator → Actor (streaming) → formatter → Gnani TTS (persona voice)
+  - Use a custom STT service with VAD headers if S1 showed you need one. **Moved to Day 16:** `pipecat-gnani` builds its headers inside a private `_connect`, so a subclass would have to copy that method. The default 500 ms silence works for now.
+- [x] Run scenario 1 by voice using Pipecat's built-in dev client
 
 **Done when:** Sharma Uncle answers you out loud.
+
+**Result (Oct 27):** Sharma Uncle answers by voice in the dev client. Gnani's final transcript is the turn, so no separate aggregator is needed. `voice/customer.py` reuses the CLI's `Call`, so the Judge and engine already run on every voice turn (the anger is only logged; Day 15 sends it to the client). The reply is spoken one sentence at a time as it streams. Not yet: barge-in, automatic endings, TTS speed by anger, echo protection (use headphones).
 
 ### Day 15 · Tue Oct 20 · Judge and engine in the live call
 - [ ] On each final transcript, run the Judge asynchronously → Engine → send the new state to the client as a server message
