@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 27):** Days 1–5 and 7–14 done. Day 6: ADRs done, voice tests pending. Eight days behind: Day 15 is next, and Days 15–21 must be compressed to make the Nov 2 demo post. Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
+**Progress (Oct 27):** Days 1–5 and 7–15 done. Day 6: ADRs done, voice tests pending. Seven days behind: Day 16 is next, and Days 16–21 must be compressed to make the Nov 2 demo post. Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -196,11 +196,13 @@ All code goes in `backend/src/shant/`.
 **Result (Oct 27):** Sharma Uncle answers by voice in the dev client. Gnani's final transcript is the turn, so no separate aggregator is needed. `voice/customer.py` reuses the CLI's `Call`, so the Judge and engine already run on every voice turn (the anger is only logged; Day 15 sends it to the client). The reply is spoken one sentence at a time as it streams. Not yet: barge-in, automatic endings, TTS speed by anger, echo protection (use headphones).
 
 ### Day 15 · Tue Oct 20 · Judge and engine in the live call
-- [ ] On each final transcript, run the Judge asynchronously → Engine → send the new state to the client as a server message
-- [ ] Anger band sets the TTS speed and the Actor's style from the next turn on
-- [ ] Endings: customer hang-up line, win line, and a 3-minute timeout that closes the call
+- [x] On each final transcript, run the Judge asynchronously → Engine → send the new state to the client as a server message
+- [x] Anger band sets the TTS speed and the Actor's style from the next turn on
+- [x] Endings: customer hang-up line, win line, and a 3-minute timeout that closes the call
 
 **Done when:** the anger level changes during a voice call and the call ends by itself.
+
+**Result (Oct 27):** played all three endings by voice with Sharma Uncle: a win, an insult that makes him hang up, and the 3-minute timeout. After every turn the browser gets a `call_state` server message (anger, strikes, time, status, the Judge's tags). Each ending has its own closing lines per scenario (`closing_lines` in the YAML). The call closes itself after the last line is spoken (`EndWorkerFrame`, checked against the real Gnani TTS so the line isn't cut off). `pipecat-gnani` has no speed setting, so `voice/gnani_tts.py` adds Gnani's `speed` field to each request; measured: the same line takes 4.44 s at 0.9 and 3.62 s at 1.15.
 
 ### Day 16 · Wed Oct 21 · Sessions, barge-in, language switch
 - [ ] FastAPI `POST /sessions` starts one bot per call; hard stop at 3 minutes; cleanup even if the browser disconnects

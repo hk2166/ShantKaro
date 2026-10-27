@@ -68,3 +68,12 @@ dynamics:
 opening_lines:
   - "Finally. Forty minutes on hold. You've charged my card twice for fourteen thousand nine hundred and ninety-nine rupees."
   - "Guru, I'm going to be very clear. You charged me twice. I want it reversed today."
+closing_lines:
+  won:
+    - "Fine. I'll wait for the credit, but if it doesn't show up, I'm calling back. Thanks."
+    - "Okay, that's actually helpful. Send me the reference number on SMS. Thanks, guru."
+  hung_up:
+    - "Forget it. I'm taking this to the banking ombudsman, and it's going on X."
+    - "I'm done. Close my card. Bye."
+  timed_out:
+    - "I can't stay on this call all day. I'll call back, and I expect answers."

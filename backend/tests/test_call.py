@@ -104,6 +104,31 @@ def test_the_clock_can_end_the_call_between_turns() -> None:
     assert call.state.status is Status.TIMED_OUT
 
 
+def test_the_customer_gets_a_last_word_only_when_the_call_ends_on_their_side() -> None:
+    call = new_call([], [])
+    assert call.closing_line() is None  # still talking
+    call.tick(SHARMA.dynamics.time_limit_s)
+    assert call.closing_line() in SHARMA.closing_lines.timed_out
+    call = new_call([], [])
+    call.hang_up()
+    assert call.closing_line() is None  # the trainee left; nobody hears a goodbye
+
+
+def test_the_snapshot_holds_what_the_trainees_screen_shows() -> None:
+    call = new_call(["reply"], [SORRY])
+    asyncio.run(call.respond("i am really sorry", 42.4))
+    assert call.snapshot() == {
+        "anger": 65,
+        "strikes": 0,
+        "max_strikes": 3,
+        "elapsed_s": 42,
+        "time_limit_s": 180,
+        "status": "in_progress",
+        "last_tags": ["apologised"],
+    }
+    json.dumps(call.snapshot())  # it goes to the browser as JSON
+
+
 def test_the_transcript_is_plain_json() -> None:
     call = new_call(["reply"], [SORRY])
     asyncio.run(call.respond("i am really sorry", 15))

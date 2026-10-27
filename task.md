@@ -7,7 +7,7 @@
 
 - **Deadline:** submission by 11:59 PM IST, Tue Nov 10 2026 (our target: Sun Nov 8)
 - **Demo post goes live:** Mon Nov 2, morning IST (shortlist = verified engagement on this post)
-- **Status:** Building. Phase 0 mostly done, Phase 1 done (Oct 19). Phase 2 (voice) started: Sharma Uncle talks by voice (Oct 27), eight days behind the day plan.
+- **Status:** Building. Phase 0 mostly done, Phase 1 done (Oct 19). Phase 2 (voice) started: a voice call now runs from the opening line to a win, hang-up or timeout (Oct 27), seven days behind the day plan.
 - **Day-by-day checklist:** [day-plan.md](day-plan.md). This file is the spec it refers to.
 
 ---
@@ -308,9 +308,9 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 
 ### Phase 2 — Voice pipeline and web MVP · Mon Oct 19 → Sun Oct 25 (days 14–20)
 - [ ] Pipecat pipeline per §5 with Gnani STT (tuned VAD) and Timbre TTS (persona voice, speed by anger band)
-  *Status:* the pipeline runs with each persona's voice and speaks the reply one sentence at a time (Oct 27). Still to do: tuned VAD (Day 16) and speed by anger band (Day 15).
-- [ ] Judge runs async on final transcripts; engine state pushed to the client as server messages
-  *Status:* the Judge and engine run on every voice turn. The state isn't sent to the client yet (Day 15).
+  *Status:* the pipeline runs with each persona's voice, speaks the reply one sentence at a time, and sets the speed from the anger band (Oct 27). `pipecat-gnani` has no speed setting, so `voice/gnani_tts.py` adds Gnani's `speed` field to each request. Still to do: tuned VAD (Day 16).
+- [x] Judge runs async on final transcripts; engine state pushed to the client as server messages
+  *Status:* done Oct 27: a `call_state` server message after every turn and at the end.
 - [ ] Barge-in: trainee interrupts the customer → TTS stops cleanly
 - [ ] Language toggle → STT reconnect with the new `lang_code`
 - [x] Speech formatter in the TTS path

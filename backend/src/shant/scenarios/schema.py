@@ -87,6 +87,14 @@ class Dynamics(Strict):
         return self
 
 
+class ClosingLines(Strict):
+    """What the customer says as the call ends, one list per ending. One is picked at random."""
+
+    won: list[str] = Field(min_length=1)
+    hung_up: list[str] = Field(min_length=1)
+    timed_out: list[str] = Field(min_length=1)
+
+
 class Scenario(Strict):
     id: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
     title: str
@@ -97,3 +105,4 @@ class Scenario(Strict):
     voice: Voice
     dynamics: Dynamics
     opening_lines: list[str] = Field(min_length=1)
+    closing_lines: ClosingLines
