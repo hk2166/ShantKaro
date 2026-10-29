@@ -7,7 +7,7 @@
 
 - **Deadline:** submission by 11:59 PM IST, Tue Nov 10 2026 (our target: Sun Nov 8)
 - **Demo post goes live:** Mon Nov 2, morning IST (shortlist = verified engagement on this post)
-- **Status:** Building. Phase 0 mostly done, Phase 1 done (Oct 19). Phase 2 (voice) started: a voice call now runs from the opening line to a win, hang-up or timeout (Oct 27), seven days behind the day plan.
+- **Status:** Building. Phase 0 mostly done, Phase 1 done (Oct 19). Phase 2 (voice) started: a voice call runs from the opening line to a win, hang-up or timeout (Oct 27); sessions, barge-in and the language switch are in code (Oct 29). Seven days behind the day plan.
 - **Day-by-day checklist:** [day-plan.md](day-plan.md). This file is the spec it refers to.
 
 ---
@@ -312,9 +312,12 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 - [x] Judge runs async on final transcripts; engine state pushed to the client as server messages
   *Status:* done Oct 27: a `call_state` server message after every turn and at the end.
 - [ ] Barge-in: trainee interrupts the customer → TTS stops cleanly
-- [ ] Language toggle → STT reconnect with the new `lang_code`
+  *Status:* built (Silero VAD → `UserTurnProcessor` interruption; the rest of the reply is dropped) and tested in code (Oct 29). Not yet tried by voice.
+- [x] Language toggle → STT reconnect with the new `lang_code`
+  *Status:* done on the server (Oct 29): a `set_language` message switches the STT to the trainee's language or the customer's. The browser toggle comes on Day 19.
 - [x] Speech formatter in the TTS path
 - [ ] Session lifecycle: `POST /sessions` → connect → 3-minute hard stop → cleanup (idempotent, survives disconnects)
+  *Status:* built on Pipecat's `POST /start` (Oct 29): one bot per call, a hard stop 30 s past the time limit, and `GET /health` to count live calls. The 10-calls-in-a-row check is still to do by voice.
 - [ ] Per-turn latency tracing to SQLite + `/debug` page
 - [ ] Web client: scenario picker, mic permission flow, call screen (persona card, anger meter, timer, optional captions), end screen
 

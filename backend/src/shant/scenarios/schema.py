@@ -106,3 +106,11 @@ class Scenario(Strict):
     dynamics: Dynamics
     opening_lines: list[str] = Field(min_length=1)
     closing_lines: ClosingLines
+
+    @property
+    def trainee_languages(self) -> list[str]:
+        """The languages the trainee may speak: their usual one, or the customer's."""
+        languages = [self.voice.stt_language, self.voice.tts_language]
+        if switch := self.dynamics.language_switch:
+            languages.append(switch.language)
+        return list(dict.fromkeys(languages))

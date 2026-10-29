@@ -3,24 +3,33 @@
 Run from backend/ (needs GNANI_API_KEY and ANTHROPIC_API_KEY in .env):
   uv run python -m shant.voice.pipeline -t webrtc
   uv run python -m shant.voice.pipeline -t webrtc --scenario rohan
-Then open http://localhost:7860/client, allow the mic, and talk.
+Then open http://localhost:7860/client, allow the mic, and talk. A browser app can instead
+pick the scenario per call: POST /start with {"body": {"scenario": "rohan"}}.
+GET /health shows how many calls are live.
 """
 
 import argparse
 import os
 import random
+import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
 from loguru import logger
+from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.frames.frames import TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
+from pipecat.processors.audio.vad_processor import VADProcessor
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
 from pipecat.transcriptions.language import Language
 from pipecat.transports.base_transport import BaseTransport, TransportParams
+from pipecat.turns.user_start import VADUserTurnStartStrategy
+from pipecat.turns.user_stop import SpeechTimeoutUserTurnStopStrategy
+from pipecat.turns.user_turn_processor import UserTurnProcessor
+from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat_gnani import GnaniSTTService
 
 from shant.game.call import Call
@@ -30,11 +39,14 @@ from shant.scenarios.schema import Scenario
 from shant.voice.customer import Customer, state_message
 from shant.voice.formatter import for_speech
 from shant.voice.gnani_tts import PacedGnaniTTS
+from shant.voice.sessions import UnknownScenarioError, add_routes, live_call, scenario_for
 
 ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_SCENARIO = "sharma_uncle"
 SAMPLE_RATE = 16000
 TTS_MODEL = "timbre-v2.5"  # the SDK's default, timbre-v2.0, is rejected (S0)
+# The customer ends the call at its time limit; past this much extra time, the bot is stopped.
+HARD_STOP_GRACE_S = 30
 load_dotenv(ROOT / ".env")
 
 transport_params = {
@@ -61,13 +73,29 @@ def speech_services(scenario: Scenario, api_key: str) -> tuple[GnaniSTTService, 
     return stt, tts
 
 
+def barge_in() -> tuple[VADProcessor, UserTurnProcessor]:
+    """Hear the trainee start talking, so the customer stops and listens (barge-in).
+
+    Gnani's STT sends only final transcripts, so a local voice detector (Silero) notices
+    speech, and the turn processor turns that into an interruption: the voice stops and the
+    rest of the reply is dropped.
+    """
+    turns = UserTurnStrategies(
+        start=[VADUserTurnStartStrategy()],
+        stop=[SpeechTimeoutUserTurnStopStrategy(wait_for_transcript=False)],
+    )
+    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer())
+    return vad, UserTurnProcessor(user_turn_strategies=turns)
+
+
 async def run_bot(transport: BaseTransport, runner_args: RunnerArguments, scenario: Scenario):
     call = Call(
         scenario, ClaudeLLM(), ClaudeLLM(JUDGE_SETTINGS), random.choice(scenario.opening_lines)
     )
     stt, tts = speech_services(scenario, os.environ["GNANI_API_KEY"])
     customer = Customer(call, set_speed=tts.set_speed)
-    pipeline = Pipeline([transport.input(), stt, customer, tts, transport.output()])
+    vad, turns = barge_in()
+    pipeline = Pipeline([transport.input(), vad, stt, turns, customer, tts, transport.output()])
     task = PipelineTask(
         pipeline,
         params=PipelineParams(enable_metrics=True),
@@ -86,20 +114,28 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments, scenar
         logger.info(f"call ended: {call.state.status}, anger {call.state.anger}")
         await task.cancel()
 
-    await PipelineRunner(handle_sigint=runner_args.handle_sigint).run(task)
+    session_id = runner_args.session_id or str(uuid.uuid4())
+    stop_after_s = scenario.dynamics.time_limit_s + HARD_STOP_GRACE_S
+    async with live_call(session_id, call, task.cancel, stop_after_s):
+        await PipelineRunner(handle_sigint=runner_args.handle_sigint).run(task)
 
 
 async def bot(runner_args: RunnerArguments) -> None:
     """Entry point the Pipecat runner calls for each new connection."""
     args = runner_args.cli_args
-    scenario = load_all()[args.scenario if args else DEFAULT_SCENARIO]
+    try:
+        scenario = scenario_for(runner_args.body, args.scenario if args else DEFAULT_SCENARIO)
+    except UnknownScenarioError as error:
+        logger.error(f"call not started: {error}")
+        return
     transport = await create_transport(runner_args, transport_params)
     await run_bot(transport, runner_args, scenario)
 
 
 if __name__ == "__main__":
-    from pipecat.runner.run import main
+    from pipecat.runner.run import app, main
 
+    add_routes(app)
     parser = argparse.ArgumentParser(description="Shant Karo voice call")
     parser.add_argument("--scenario", choices=sorted(load_all()), default=DEFAULT_SCENARIO)
     main(parser)

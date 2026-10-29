@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import AsyncIterator
 from dataclasses import replace
 
 import pytest
@@ -6,12 +7,21 @@ from fakes import ScriptedActor, ScriptedJudge
 from pipecat.frames.frames import (
     EndWorkerFrame,
     Frame,
+    InterruptionFrame,
+    STTUpdateSettingsFrame,
     TextFrame,
     TranscriptionFrame,
     TTSSpeakFrame,
+    UserStartedSpeakingFrame,
+    VADUserStartedSpeakingFrame,
 )
 from pipecat.processors.frame_processor import FrameDirection
-from pipecat.processors.frameworks.rtvi import RTVIServerMessageFrame
+from pipecat.processors.frameworks.rtvi import (
+    RTVIClientMessageFrame,
+    RTVIServerMessageFrame,
+    RTVIServerResponseFrame,
+)
+from pipecat.services.settings import STTSettings
 from pipecat.tests.utils import SleepFrame, run_test
 
 from shant.agents.judge import TagEvidence, Verdict
@@ -20,7 +30,7 @@ from shant.scenarios.loader import load_all
 from shant.tags import Tag
 from shant.voice.customer import Customer
 from shant.voice.gnani_tts import PacedGnaniTTS
-from shant.voice.pipeline import speech_services
+from shant.voice.pipeline import barge_in, speech_services
 
 SHARMA = load_all()["sharma_uncle"]
 ENDINGS = SHARMA.closing_lines
@@ -178,3 +188,75 @@ def test_the_speed_goes_into_gnanis_request() -> None:
     assert "speed" not in plugin._build_tts_payload("hi", tts._settings, 16000)
     tts.set_speed(1.12)
     assert plugin._build_tts_payload("hi", tts._settings, 16000)["speed"] == 1.12
+
+
+class SlowActor:
+    """Says one sentence, pauses as if thinking, then says another."""
+
+    async def stream(self, system: str, messages: object) -> AsyncIterator[str]:
+        yield "पहली बात सुनिए। "
+        await asyncio.sleep(0.3)
+        yield "दूसरी बात भी सुनिए।"
+
+
+def test_the_customer_stops_talking_when_talked_over() -> None:
+    call = Call(SHARMA, SlowActor(), ScriptedJudge([SORRY]), "hi")
+    down, _ = asyncio.run(
+        run_test(
+            Customer(call),
+            frames_to_send=[heard("sorry"), SleepFrame(0.1), InterruptionFrame(), SleepFrame(0.5)],
+            expected_down_frames=[TTSSpeakFrame, InterruptionFrame, RTVIServerMessageFrame],
+        )
+    )
+    assert isinstance(down[0], TTSSpeakFrame) and down[0].text == "पहली बात सुनिए।"
+    assert call.state.anger == 65  # the turn still counts, even if the rest went unsaid
+
+
+def test_the_trainee_starting_to_talk_interrupts_the_customer() -> None:
+    _, turns = barge_in()
+    asyncio.run(
+        run_test(
+            turns,
+            frames_to_send=[VADUserStartedSpeakingFrame()],
+            expected_down_frames=[
+                VADUserStartedSpeakingFrame,
+                UserStartedSpeakingFrame,
+                InterruptionFrame,  # stops the voice and the rest of the reply
+            ],
+        )
+    )
+
+
+def language_request(language: str) -> RTVIClientMessageFrame:
+    return RTVIClientMessageFrame(msg_id="1", type="set_language", data={"language": language})
+
+
+def test_the_trainee_can_switch_to_the_customers_language() -> None:
+    down, up = asyncio.run(
+        run_test(
+            customer_saying(),
+            frames_to_send=[language_request("hi-IN")],
+            expected_down_frames=[RTVIServerResponseFrame],
+            expected_up_frames=[STTUpdateSettingsFrame],
+        )
+    )
+    [response], [update] = down, up
+    assert isinstance(response, RTVIServerResponseFrame) and isinstance(
+        update, STTUpdateSettingsFrame
+    )
+    assert response.data == {"language": "hi-IN"}
+    assert isinstance(update.delta, STTSettings) and update.delta.language == "hi-IN"
+
+
+def test_a_language_the_scenario_doesnt_use_is_refused() -> None:
+    down, up = asyncio.run(
+        run_test(
+            customer_saying(),
+            frames_to_send=[language_request("ta-IN")],  # Sharma Uncle speaks Hindi, not Tamil
+            expected_down_frames=[RTVIServerResponseFrame],
+            expected_up_frames=[],
+        )
+    )
+    [response] = down
+    assert isinstance(response, RTVIServerResponseFrame)
+    assert response.error == "language must be one of en-IN, hi-IN"

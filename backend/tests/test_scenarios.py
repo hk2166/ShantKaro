@@ -109,3 +109,10 @@ def test_every_ending_needs_a_closing_line(tmp_path: Path, sharma: dict) -> None
     sharma["closing_lines"]["timed_out"] = []
     with pytest.raises(ScenarioError, match="timed_out"):
         load_scenario(write(tmp_path, sharma))
+
+
+def test_the_trainee_may_speak_their_own_language_or_the_customers() -> None:
+    scenarios = load_all()
+    assert scenarios["sharma_uncle"].trainee_languages == ["en-IN", "hi-IN"]
+    assert scenarios["lakshmi_aunty"].trainee_languages == ["en-IN", "ta-IN"]
+    assert scenarios["rohan"].trainee_languages == ["en-IN"]
