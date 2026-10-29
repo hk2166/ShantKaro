@@ -7,6 +7,9 @@ time, so the customer starts talking before the whole reply is written.
 It also runs the call clock, sends the call's state to the browser after every change, sets
 the voice's speed from the customer's anger, and ends the call with a last line from the
 customer when they win, hang up or run out of time.
+
+When the trainee talks over the customer, the rest of the reply is dropped. When the browser
+asks for another language, the speech-to-text switches to it.
 """
 
 import asyncio
@@ -17,12 +20,20 @@ from loguru import logger
 from pipecat.frames.frames import (
     EndWorkerFrame,
     Frame,
+    InterruptionFrame,
     StartFrame,
+    STTUpdateSettingsFrame,
     TranscriptionFrame,
     TTSSpeakFrame,
 )
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-from pipecat.processors.frameworks.rtvi import RTVIServerMessageFrame
+from pipecat.processors.frameworks.rtvi import (
+    RTVIClientMessageFrame,
+    RTVIServerMessageFrame,
+    RTVIServerResponseFrame,
+)
+from pipecat.services.settings import STTSettings
+from pipecat.transcriptions.language import Language
 
 from shant.game.call import Call
 from shant.llm.provider import LLMRefusalError
@@ -44,6 +55,9 @@ class Customer(FrameProcessor):
         self._started_at = time.monotonic()
         self._call_timer: asyncio.Task | None = None
         self._said_goodbye = False
+        # Counts the times the trainee started talking. A reply stops being spoken as soon as
+        # this changes, so the customer goes quiet when talked over (barge-in).
+        self._interruptions = 0
         # The trainee may speak again while the customer is still replying. Turns must not
         # overlap, or the conversation history gets mixed up. The clock waits its turn too.
         self._one_turn_at_a_time = asyncio.Lock()
@@ -51,6 +65,11 @@ class Customer(FrameProcessor):
 
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         await super().process_frame(frame, direction)
+        if isinstance(frame, InterruptionFrame):
+            self._interruptions += 1
+        if isinstance(frame, RTVIClientMessageFrame) and frame.type == "set_language":
+            await self._switch_language(frame)
+            return
         if isinstance(frame, TranscriptionFrame):
             line = frame.text.strip()
             # Real mics produce empty transcripts from breaths and noise (S1).
@@ -77,6 +96,7 @@ class Customer(FrameProcessor):
                 return
             sentences: asyncio.Queue[str | None] = asyncio.Queue()
             buffer = SentenceBuffer()
+            interruptions_before = self._interruptions
 
             def on_text(chunk: str) -> None:
                 for sentence in buffer.feed(chunk):
@@ -94,7 +114,8 @@ class Customer(FrameProcessor):
             turn.add_done_callback(lambda _: sentences.put_nowait(None))
             try:
                 while (sentence := await sentences.get()) is not None:
-                    if spoken := for_speech(sentence):
+                    talked_over = self._interruptions != interruptions_before
+                    if (spoken := for_speech(sentence)) and not talked_over:
                         await self.push_frame(TTSSpeakFrame(spoken))
                 record = await turn
             except LLMRefusalError:
@@ -122,6 +143,23 @@ class Customer(FrameProcessor):
         while not self.call.state.finished:
             await asyncio.sleep(CLOCK_TICK_S)
             await self.tick()
+
+    async def _switch_language(self, message: RTVIClientMessageFrame) -> None:
+        """Make the speech-to-text listen for the language the trainee chose in the browser."""
+        data = message.data if isinstance(message.data, dict) else {}
+        language = data.get("language")
+        allowed = self.call.scenario.trainee_languages
+        if language not in allowed:
+            error = f"language must be one of {', '.join(allowed)}"
+            await self.push_frame(RTVIServerResponseFrame(client_msg=message, error=error))
+            return
+        logger.info(f"the trainee now speaks {language}")
+        # The speech-to-text is before this step in the pipeline, so the change goes upstream.
+        update = STTUpdateSettingsFrame(delta=STTSettings(language=Language(language)))
+        await self.push_frame(update, FrameDirection.UPSTREAM)
+        await self.push_frame(
+            RTVIServerResponseFrame(client_msg=message, data={"language": language})
+        )
 
     def _match_speed_to_anger(self) -> None:
         voice = self.call.scenario.voice

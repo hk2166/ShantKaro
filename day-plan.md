@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 27):** Days 1–5 and 7–15 done. Day 6: ADRs done, voice tests pending. Seven days behind: Day 16 is next, and Days 16–21 must be compressed to make the Nov 2 demo post. Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
+**Progress (Oct 29):** Days 1–5 and 7–16 done (Day 16's voice checks still to do). Day 6: ADRs done, voice tests pending. Seven days behind: Day 17 is next, and Days 17–21 must be compressed to make the Nov 2 demo post. Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -205,11 +205,14 @@ All code goes in `backend/src/shant/`.
 **Result (Oct 27):** played all three endings by voice with Sharma Uncle: a win, an insult that makes him hang up, and the 3-minute timeout. After every turn the browser gets a `call_state` server message (anger, strikes, time, status, the Judge's tags). Each ending has its own closing lines per scenario (`closing_lines` in the YAML). The call closes itself after the last line is spoken (`EndWorkerFrame`, checked against the real Gnani TTS so the line isn't cut off). `pipecat-gnani` has no speed setting, so `voice/gnani_tts.py` adds Gnani's `speed` field to each request; measured: the same line takes 4.44 s at 0.9 and 3.62 s at 1.15.
 
 ### Day 16 · Wed Oct 21 · Sessions, barge-in, language switch
-- [ ] FastAPI `POST /sessions` starts one bot per call; hard stop at 3 minutes; cleanup even if the browser disconnects
-- [ ] Check that barge-in works with the interruptible TTS service
-- [ ] Language toggle message → reconnect STT with the new `lang_code`
+- [x] FastAPI `POST /sessions` starts one bot per call; hard stop at 3 minutes; cleanup even if the browser disconnects
+  - Pipecat's runner already has this route as `POST /start` (`{"body": {"scenario": "rohan"}}` → `sessionId`, one bot per WebRTC connection), so we use it instead of writing our own.
+- [ ] Check that barge-in works with the interruptible TTS service (built and tested in code; not yet tried by voice)
+- [x] Language toggle message → reconnect STT with the new `lang_code` (server side; the browser toggle comes on Day 19)
 
 **Done when:** 10 calls in a row start and stop cleanly with no leftover bot processes.
+
+**Result (Oct 29):** `voice/sessions.py` picks each call's scenario from the `/start` body, keeps a list of live calls, and stops any call still running 30 s past its time limit. `GET /health` shows the number of live calls. Barge-in: Gnani's STT sends only final transcripts, so a local Silero voice detector and Pipecat's `UserTurnProcessor` raise an interruption when the trainee starts talking; the voice stops and the rest of the reply is dropped. The trainee may switch the STT to their own language or the customer's (`set_language` message). Still to do by voice: the barge-in check and the 10-call check. Moved to Day 17: the STT silence setting (latency tuning). Known gap: when talked over, the customer still remembers the unheard part of its reply.
 
 ### Day 17 · Thu Oct 22 · Measure and cut latency
 - [ ] Record a timestamp for every stage in §5.2 on every turn → SQLite (`store/`)
