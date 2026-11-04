@@ -11,7 +11,7 @@ Specs and reasoning are in [task.md](task.md); references like §5.1 point there
 - Time assumed: ~3–4 h on weekdays, ~6 h on weekends.
 - 🧑 marks something only you can do (accounts, people, posting).
 
-**Progress (Oct 29):** Days 1–5 and 7–16 done (Day 16's voice checks still to do). Day 6: ADRs done, voice tests pending. Seven days behind: Day 17 is next, and Days 17–21 must be compressed to make the Nov 2 demo post. Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
+**Progress (Nov 5):** Days 1–5, 7–16, 18–19 done, plus the report card and cost limits from Days 21–22 (voice checks still to do on Days 16 and 19). Day 6: ADRs done, voice tests pending. The Nov 2 launch slipped; plan to the Nov 10 deadline: deploy next (Nov 6), then the demo video and posts (Nov 7), submit Nov 8. Cut: latency tuning (Day 17), share card and leaderboard (Day 21), beta (Days 25–26). Open for you: S2 ratings, a voice call from a phone, Discord questions, STT cost on the dashboard.
 
 **Blocked on Gnani API access?** Sign-in with a personal email opens in the 2nd week of October. Until then, do Days 7–10 first (they need no Gnani access) and come back to Days 2–6.
 
@@ -222,18 +222,24 @@ All code goes in `backend/src/shant/`.
 **Done when:** you know your P50/P95 and which stage is slowest.
 
 ### Day 18 · Fri Oct 23 · Web app, part 1
-- [ ] Scenario picker with persona cards from `GET /scenarios`
-- [ ] Mic permission flow, including the "permission denied" state
-- [ ] Connect to the bot with the Pipecat client SDK
+- [x] Scenario picker with persona cards from `GET /scenarios`
+- [x] Mic permission flow, including the "permission denied" state
+- [x] Connect to the bot with the Pipecat client SDK
 
 **Done when:** you can start a call from your own page.
 
+**Result (Nov 5):** the web app in `frontend/` (React + Vite, Pipecat client SDK 1.13 with SmallWebRTC): a picker, a brief with the policy, and a mic check with a clear "microphone blocked" state. Tested in the browser against the real backend with a silent test mic: the call connects and the customer's opening line arrives as a caption.
+
+
 ### Day 19 · Sat Oct 24 · Web app, part 2
-- [ ] Call screen: persona card, live anger meter, 3:00 timer, captions toggle, language toggle, hang-up button
-- [ ] End screen: result + report card
-- [ ] Check the layout at phone width (375 px)
+- [x] Call screen: persona card, live anger meter, 3:00 timer, captions toggle, language toggle, hang-up button
+- [x] End screen: result + report card
+- [x] Check the layout at phone width (375 px)
 
 **Done when:** you can play a full round in your UI on laptop and phone.
+
+**Result (Nov 5):** the call screen shows the anger meter, timer, strikes, the Judge's tags after each turn, captions, a language switch and hang-up; the end screen fetches the report card. Checked at 375 px with no sideways scroll. Hanging up and switching language were tested end to end against the real backend. Still to do: a full spoken call (the Browser pane has no mic).
+
 
 ### Day 20 · Sun Oct 25 · 🛟 Buffer + week 3 wrap-up
 - [ ] Play all 3 scenarios by voice and fix what's broken
@@ -246,21 +252,24 @@ All code goes in `backend/src/shant/`.
 ## Week 4 — Finish, deploy, beta, video
 
 ### Day 21 · Mon Oct 26 · Report card, share card, leaderboard
-- [ ] `GET /reports/{id}` + a report page
-- [ ] Share card image (Open Graph) showing the score and the best line
-- [ ] Leaderboard (nickname only, per scenario)
+- [x] `GET /reports/{id}` + a report page
+- [ ] Share card image (Open Graph) showing the score and the best line (cut for time)
+- [ ] Leaderboard (nickname only, per scenario) (cut for time)
 
 **Done when:** sharing a report link shows a preview card.
 
 ### Day 22 · Tue Oct 27 · Cost and abuse controls
-- [ ] Track STT seconds and TTS characters per session → convert to credits using the S0 rates
-- [ ] Add these limits:
+- [ ] Track STT seconds and TTS characters per session → convert to credits using the S0 rates (not done: calls are counted instead; each is capped at 3 minutes)
+- [x] Add these limits:
   - Per-IP daily limit
   - Max concurrent calls
   - Daily budget kill-switch that shows a "Lines are busy, try again tomorrow" screen
-- [ ] Profanity from the trainee → the customer hangs up
+- [x] Profanity from the trainee → the customer hangs up (the `abusive` tag, Day 13)
 
 **Done when:** the kill-switch is tested by setting a tiny budget.
+
+**Result (Nov 5):** `voice/limits.py` checks every `POST /start`: at most `SHANT_MAX_LIVE_CALLS` (3) at once, `SHANT_CALLS_PER_DAY` (150) in total and `SHANT_CALLS_PER_IP_PER_DAY` (5) per visitor, by IST day. The app shows the server's message ("Lines are busy, try again tomorrow"). Tested with a tiny per-IP limit. A direct `POST /api/offer` is refused, and one session starts one bot. Known gap: calls still connecting don't count as live, so a burst can briefly exceed 3.
+
 
 ### Day 23 · Wed Oct 28 · Deploy
 - [ ] Backend container on a host that supports WebRTC (add a TURN server if phones can't connect)

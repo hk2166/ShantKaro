@@ -1,122 +1,138 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 
-function App() {
-  const [count, setCount] = useState(0)
+import {
+  type CallState,
+  fetchScenarios,
+  type Scenario,
+  StartRefused,
+  startSession,
+} from './api.ts'
+import { Spinner } from './components.tsx'
+import { Brief } from './screens/Brief.tsx'
+import { Picker } from './screens/Picker.tsx'
+import { ReportView } from './screens/ReportView.tsx'
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+// The voice SDK is most of the app's size, so it loads only when a call starts.
+const Call = lazy(() => import('./screens/Call.tsx').then((module) => ({ default: module.Call })))
 
-      <div className="ticks"></div>
+type Screen =
+  | { name: 'picker' }
+  | { name: 'brief'; scenario: Scenario }
+  | { name: 'call'; scenario: Scenario; sessionId: string }
+  | { name: 'report'; scenario: Scenario; sessionId: string; finalState: CallState | null }
+  | { name: 'refused'; scenario: Scenario; message: string }
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+export default function App() {
+  const [scenarios, setScenarios] = useState<Scenario[] | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [screen, setScreen] = useState<Screen>({ name: 'picker' })
+  const [starting, setStarting] = useState(false)
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+  useEffect(() => {
+    fetchScenarios()
+      .then(setScenarios)
+      .catch((reason: unknown) => setLoadError(reason instanceof Error ? reason.message : String(reason)))
+  }, [])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [screen.name])
+
+  async function startCall(scenario: Scenario) {
+    setStarting(true)
+    try {
+      const sessionId = await startSession(scenario.id)
+      setScreen({ name: 'call', scenario, sessionId })
+    } catch (reason) {
+      const message =
+        reason instanceof StartRefused
+          ? reason.message
+          : "We couldn't reach the server. Check your connection and try again."
+      setScreen({ name: 'refused', scenario, message })
+    } finally {
+      setStarting(false)
+    }
+  }
+
+  const callEnded = useCallback(
+    (scenario: Scenario, sessionId: string) => (finalState: CallState | null) =>
+      setScreen({ name: 'report', scenario, sessionId, finalState }),
+    [],
   )
-}
 
-export default App
+  if (loadError) {
+    return (
+      <main className="page narrow">
+        <div className="notice error" role="alert">
+          <strong>The training centre is closed right now</strong>
+          <p>{loadError}. Please try again in a few minutes.</p>
+        </div>
+      </main>
+    )
+  }
+  if (!scenarios) {
+    return (
+      <main className="page narrow">
+        <Spinner label="Loading the customers…" />
+      </main>
+    )
+  }
+
+  switch (screen.name) {
+    case 'picker':
+      return <Picker scenarios={scenarios} onPick={(scenario) => setScreen({ name: 'brief', scenario })} />
+    case 'brief':
+      return (
+        <Brief
+          scenario={screen.scenario}
+          starting={starting}
+          onStart={() => startCall(screen.scenario)}
+          onBack={() => setScreen({ name: 'picker' })}
+        />
+      )
+    case 'call':
+      return (
+        <Suspense
+          fallback={
+            <main className="page narrow">
+              <Spinner label="Connecting the call…" />
+            </main>
+          }
+        >
+          <Call
+            key={screen.sessionId}
+            scenario={screen.scenario}
+            sessionId={screen.sessionId}
+            onEnded={callEnded(screen.scenario, screen.sessionId)}
+          />
+        </Suspense>
+      )
+    case 'report':
+      return (
+        <ReportView
+          scenario={screen.scenario}
+          sessionId={screen.sessionId}
+          finalState={screen.finalState}
+          onRetry={() => setScreen({ name: 'brief', scenario: screen.scenario })}
+          onPickAnother={() => setScreen({ name: 'picker' })}
+        />
+      )
+    case 'refused':
+      return (
+        <main className="page narrow">
+          <div className="notice warn" role="alert">
+            <strong>We couldn't connect you</strong>
+            <p>{screen.message}</p>
+          </div>
+          <div className="actions">
+            <button type="button" className="primary" onClick={() => setScreen({ name: 'brief', scenario: screen.scenario })}>
+              Try again
+            </button>
+            <button type="button" className="ghost" onClick={() => setScreen({ name: 'picker' })}>
+              Pick another customer
+            </button>
+          </div>
+        </main>
+      )
+  }
+}

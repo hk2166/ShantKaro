@@ -7,7 +7,7 @@
 
 - **Deadline:** submission by 11:59 PM IST, Tue Nov 10 2026 (our target: Sun Nov 8)
 - **Demo post goes live:** Mon Nov 2, morning IST (shortlist = verified engagement on this post)
-- **Status:** Building. Phase 0 mostly done, Phase 1 done (Oct 19). Phase 2 (voice) started: a voice call runs from the opening line to a win, hang-up or timeout (Oct 27); sessions, barge-in and the language switch are in code (Oct 29). Seven days behind the day plan.
+- **Status:** Building. Phase 1 done (Oct 19). Phase 2 done in code (Nov 5): the game runs by voice in our own web app, with the report card at the end and cost limits on new calls. Not yet: deploy, the demo video and the posts (the Nov 2 launch slipped). Remaining plan: deploy Nov 6, video and posts Nov 7, submit Nov 8.
 - **Day-by-day checklist:** [day-plan.md](day-plan.md). This file is the spec it refers to.
 
 ---
@@ -319,7 +319,8 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 - [ ] Session lifecycle: `POST /sessions` → connect → 3-minute hard stop → cleanup (idempotent, survives disconnects)
   *Status:* built on Pipecat's `POST /start` (Oct 29): one bot per call, a hard stop 30 s past the time limit, and `GET /health` to count live calls. The 10-calls-in-a-row check is still to do by voice.
 - [ ] Per-turn latency tracing to SQLite + `/debug` page
-- [ ] Web client: scenario picker, mic permission flow, call screen (persona card, anger meter, timer, optional captions), end screen
+- [x] Web client: scenario picker, mic permission flow, call screen (persona card, anger meter, timer, optional captions), end screen
+  *Status:* done Nov 5 in `frontend/`; tested in the browser against the real backend. A full spoken call from the app is still to do.
 
 **Exit:** a full voice round works in Chrome on a laptop and a phone; first P50/P95 latency numbers recorded.
 
@@ -327,6 +328,7 @@ Legend: 🧑 = only Hemant can do it (accounts, money, people).
 - [ ] Tune all 3 scenarios by playing each ≥ 10 times; adjust weights and prompts with evals re-run each time
 - [ ] Report card page + share card image (Open Graph) + leaderboard (nickname, per scenario)
 - [ ] Cost controls from §8 (limits, budget kill-switch, usage tracking)
+  *Status:* limits and the daily kill-switch done Nov 5 (`voice/limits.py`); usage is counted in calls, not credits.
 - [ ] STT noise eval (§7.4) and latency benchmark (§7.5) results in the README
 - [ ] Deploy: backend container on a host that supports WebRTC (TURN server if needed), frontend on a static host, HTTPS, secrets, health check, structured logs
 - [ ] Load check: 5 simultaneous calls from different networks
