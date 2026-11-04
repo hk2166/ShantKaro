@@ -5,7 +5,9 @@ Run from backend/ (needs GNANI_API_KEY and ANTHROPIC_API_KEY in .env):
   uv run python -m shant.voice.pipeline -t webrtc --scenario rohan
 Then open http://localhost:7860/client, allow the mic, and talk. A browser app can instead
 pick the scenario per call: POST /start with {"body": {"scenario": "rohan"}}.
-GET /health shows how many calls are live.
+GET /scenarios lists the customers, GET /reports/{session_id} gives a call's report card,
+and GET /health shows how many calls are live. Limits: SHANT_MAX_LIVE_CALLS,
+SHANT_CALLS_PER_DAY and SHANT_CALLS_PER_IP_PER_DAY.
 """
 
 import argparse
@@ -33,13 +35,20 @@ from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat_gnani import GnaniSTTService
 
 from shant.game.call import Call
-from shant.llm.claude import JUDGE_SETTINGS, ClaudeLLM
+from shant.llm.claude import COACH_SETTINGS, JUDGE_SETTINGS, ClaudeLLM
 from shant.scenarios.loader import load_all
 from shant.scenarios.schema import Scenario
 from shant.voice.customer import Customer, state_message
 from shant.voice.formatter import for_speech
 from shant.voice.gnani_tts import PacedGnaniTTS
-from shant.voice.sessions import UnknownScenarioError, add_routes, live_call, scenario_for
+from shant.voice.reports import start_report
+from shant.voice.sessions import (
+    UnknownScenarioError,
+    add_routes,
+    claim_session,
+    live_call,
+    scenario_for,
+)
 
 ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_SCENARIO = "sharma_uncle"
@@ -111,18 +120,26 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments, scenar
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client) -> None:
+        call.hang_up()  # no-op if the call already ended on its own
         logger.info(f"call ended: {call.state.status}, anger {call.state.anger}")
         await task.cancel()
 
     session_id = runner_args.session_id or str(uuid.uuid4())
     stop_after_s = scenario.dynamics.time_limit_s + HARD_STOP_GRACE_S
-    async with live_call(session_id, call, task.cancel, stop_after_s):
+
+    def write_report() -> None:
+        start_report(session_id, call, ClaudeLLM(COACH_SETTINGS))
+
+    async with live_call(session_id, call, task.cancel, stop_after_s, on_end=write_report):
         await PipelineRunner(handle_sigint=runner_args.handle_sigint).run(task)
 
 
 async def bot(runner_args: RunnerArguments) -> None:
     """Entry point the Pipecat runner calls for each new connection."""
     args = runner_args.cli_args
+    if runner_args.session_id and not claim_session(runner_args.session_id):
+        logger.warning(f"call not started: session {runner_args.session_id} already has a bot")
+        return
     try:
         scenario = scenario_for(runner_args.body, args.scenario if args else DEFAULT_SCENARIO)
     except UnknownScenarioError as error:
