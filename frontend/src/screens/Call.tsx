@@ -38,7 +38,8 @@ export function Call(props: {
   const [client] = useState(
     () =>
       new PipecatClient({
-        transport: new SmallWebRTCTransport(),
+        // STUN lets the browser find its public address when the server is on another network.
+        transport: new SmallWebRTCTransport({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }),
         enableMic: true,
         enableCam: false,
       }),

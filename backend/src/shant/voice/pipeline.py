@@ -48,6 +48,7 @@ from shant.voice.sessions import (
     claim_session,
     live_call,
     scenario_for,
+    use_stun_servers,
 )
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -153,6 +154,8 @@ if __name__ == "__main__":
     from pipecat.runner.run import app, main
 
     add_routes(app)
+    if stun := use_stun_servers():
+        logger.info(f"WebRTC STUN servers: {stun}")
     parser = argparse.ArgumentParser(description="Shant Karo voice call")
     parser.add_argument("--scenario", choices=sorted(load_all()), default=DEFAULT_SCENARIO)
     main(parser)

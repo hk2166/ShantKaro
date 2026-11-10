@@ -18,6 +18,7 @@ from shant.voice.sessions import (
     live_call,
     report_for,
     scenario_for,
+    use_stun_servers,
 )
 
 SHARMA = load_all()["sharma_uncle"]
@@ -265,3 +266,17 @@ def test_without_allowed_origins_no_cross_site_calls(monkeypatch: pytest.MonkeyP
     add_routes(app)
     response = TestClient(app).get("/health", headers={"Origin": "https://shant-karo.vercel.app"})
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_stun_servers_reach_pipecats_webrtc_handler() -> None:
+    from pipecat.transports.smallwebrtc.request_handler import SmallWebRTCRequestHandler
+
+    original = SmallWebRTCRequestHandler.__init__
+    try:
+        assert use_stun_servers({}) == []
+        servers = use_stun_servers({"SHANT_STUN_SERVERS": "stun:stun.l.google.com:19302"})
+        assert servers == ["stun:stun.l.google.com:19302"]
+        handler = SmallWebRTCRequestHandler()
+        assert [server.urls for server in handler._ice_servers] == servers  # type: ignore[union-attr]
+    finally:
+        SmallWebRTCRequestHandler.__init__ = original  # type: ignore[method-assign]
