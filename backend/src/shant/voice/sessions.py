@@ -10,11 +10,13 @@ the health check, and the cost limits on `/start`.
 
 import asyncio
 import json
+import os
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 
@@ -180,3 +182,43 @@ def add_routes(app: FastAPI, counter: CallCounter | None = None) -> None:
         if response.status_code == 200:
             counter.record(ip)
         return response
+
+    # The web app may be hosted elsewhere (Vercel). Added last, so it wraps the limits above
+    # and refusals reach the browser with CORS headers too.
+    if origins := allowed_origins():
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_methods=["GET", "POST", "PATCH"],
+            allow_headers=["*"],
+        )
+
+
+def allowed_origins(env: dict[str, str] | None = None) -> list[str]:
+    """Sites allowed to call this server, from SHANT_ALLOWED_ORIGINS (comma-separated)."""
+    value = (env if env is not None else os.environ).get("SHANT_ALLOWED_ORIGINS", "")
+    return [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
+
+
+def use_stun_servers(env: dict[str, str] | None = None) -> list[str]:
+    """Give Pipecat's WebRTC handler STUN servers from SHANT_STUN_SERVERS (comma-separated).
+
+    A cloud server (AWS EC2) sees only its private address, so without STUN it offers callers an
+    address they can't reach. Pipecat's runner builds its WebRTC handler with no ICE servers and
+    no option to set them, so this wraps the handler's constructor. Call it before `main()`.
+    """
+    value = (env if env is not None else os.environ).get("SHANT_STUN_SERVERS", "")
+    servers = [url.strip() for url in value.split(",") if url.strip()]
+    if not servers:
+        return []
+    from pipecat.transports.smallwebrtc.connection import IceServer
+    from pipecat.transports.smallwebrtc.request_handler import SmallWebRTCRequestHandler
+
+    original = SmallWebRTCRequestHandler.__init__
+    stun = [IceServer(urls=url) for url in servers]
+
+    def init_with_stun(self, *args: Any, ice_servers: Any = None, **kwargs: Any) -> None:
+        original(self, *args, ice_servers=ice_servers or stun, **kwargs)
+
+    SmallWebRTCRequestHandler.__init__ = init_with_stun  # type: ignore[method-assign]
+    return servers

@@ -18,6 +18,7 @@ from shant.voice.sessions import (
     live_call,
     report_for,
     scenario_for,
+    use_stun_servers,
 )
 
 SHARMA = load_all()["sharma_uncle"]
@@ -244,3 +245,38 @@ def test_waiting_for_a_report_returns_it_once_written() -> None:
         return await report_for("written", wait_s=1)
 
     assert asyncio.run(run()) == {"total": 80}
+
+
+def test_only_the_listed_web_app_may_call_from_another_site(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SHANT_ALLOWED_ORIGINS", "https://shant-karo.vercel.app/, http://x.test")
+    app = FastAPI()
+    add_routes(app)
+    client = TestClient(app)
+    allowed = client.get("/health", headers={"Origin": "https://shant-karo.vercel.app"})
+    other = client.get("/health", headers={"Origin": "https://evil.example"})
+    assert allowed.headers["access-control-allow-origin"] == "https://shant-karo.vercel.app"
+    assert "access-control-allow-origin" not in other.headers
+
+
+def test_without_allowed_origins_no_cross_site_calls(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SHANT_ALLOWED_ORIGINS", raising=False)
+    app = FastAPI()
+    add_routes(app)
+    response = TestClient(app).get("/health", headers={"Origin": "https://shant-karo.vercel.app"})
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_stun_servers_reach_pipecats_webrtc_handler() -> None:
+    from pipecat.transports.smallwebrtc.request_handler import SmallWebRTCRequestHandler
+
+    original = SmallWebRTCRequestHandler.__init__
+    try:
+        assert use_stun_servers({}) == []
+        servers = use_stun_servers({"SHANT_STUN_SERVERS": "stun:stun.l.google.com:19302"})
+        assert servers == ["stun:stun.l.google.com:19302"]
+        handler = SmallWebRTCRequestHandler()
+        assert [server.urls for server in handler._ice_servers] == servers  # type: ignore[union-attr]
+    finally:
+        SmallWebRTCRequestHandler.__init__ = original  # type: ignore[method-assign]

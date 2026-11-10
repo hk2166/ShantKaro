@@ -1,4 +1,6 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import path from 'node:path'
 import { defineConfig } from 'vite'
 
 // The voice backend (uv run python -m shant.voice.pipeline -t webrtc) listens on 7860.
@@ -6,7 +8,12 @@ import { defineConfig } from 'vite'
 const backend = 'http://localhost:7860'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(import.meta.dirname, './src'),
+    },
+  },
   server: {
     proxy: {
       '/scenarios': backend,
