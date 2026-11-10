@@ -1,5 +1,6 @@
 // Talks to the Shant Karo backend. In development, Vite forwards these paths to it
-// (see vite.config.ts), so the browser only ever talks to one origin.
+// (see vite.config.ts). A deployed build sets VITE_BACKEND_URL to the voice server's address.
+const BACKEND = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/$/, '')
 
 export type Scenario = {
   id: string
@@ -67,14 +68,14 @@ export class StartRefused extends Error {
 }
 
 export async function fetchScenarios(): Promise<Scenario[]> {
-  const response = await fetch('/scenarios')
+  const response = await fetch(`${BACKEND}/scenarios`)
   if (!response.ok) throw new Error(`Couldn't load the customers (${response.status})`)
   return response.json()
 }
 
 /** Ask the server for a call with this customer. Returns the session id to connect to. */
 export async function startSession(scenarioId: string): Promise<string> {
-  const response = await fetch('/start', {
+  const response = await fetch(`${BACKEND}/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ transport: 'webrtc', body: { scenario: scenarioId } }),
@@ -89,7 +90,7 @@ export async function startSession(scenarioId: string): Promise<string> {
   return data.sessionId
 }
 
-export const offerEndpoint = (sessionId: string) => `/sessions/${sessionId}/api/offer`
+export const offerEndpoint = (sessionId: string) => `${BACKEND}/sessions/${sessionId}/api/offer`
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -97,7 +98,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 export async function fetchReport(sessionId: string, signal?: AbortSignal): Promise<Report> {
   const deadline = Date.now() + 90_000
   while (Date.now() < deadline) {
-    const response = await fetch(`/reports/${sessionId}`, { signal })
+    const response = await fetch(`${BACKEND}/reports/${sessionId}`, { signal })
     if (response.status === 200) return response.json()
     if (response.status !== 202) throw new Error(`Couldn't load the report (${response.status})`)
     await sleep(1500)

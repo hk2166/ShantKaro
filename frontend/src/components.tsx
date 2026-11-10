@@ -1,66 +1,74 @@
+import { cn } from '@/lib/utils'
+
 import type { Scenario } from './api.ts'
+import { Card, CardContent, CardHeader } from './components/ui/card.tsx'
+import { Progress, ProgressLabel, ProgressValue } from './components/ui/progress.tsx'
+import { Skeleton } from './components/ui/skeleton.tsx'
 import { mood } from './labels.ts'
 
-const AVATAR_HUES: Record<string, number> = { sharma_uncle: 28, lakshmi_aunty: 330, rohan: 205 }
+// Each customer's avatar colour is identity, not state, so it uses the raw palette.
+const AVATAR_COLORS: Record<string, string> = {
+  sharma_uncle: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
+  lakshmi_aunty: 'bg-pink-100 text-pink-900 dark:bg-pink-900/40 dark:text-pink-200',
+  rohan: 'bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-200',
+}
 
-export function Avatar({ scenario, size = 56 }: { scenario: Scenario; size?: number }) {
+export function Avatar({ scenario, large = false }: { scenario: Scenario; large?: boolean }) {
   const initials = scenario.persona.name
     .split(' ')
     .map((word) => word[0])
     .join('')
     .slice(0, 2)
-  const hue = AVATAR_HUES[scenario.id] ?? 260
   return (
     <div
-      className="avatar"
-      style={{ width: size, height: size, fontSize: size * 0.38, ['--hue' as string]: hue }}
       aria-hidden="true"
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full font-semibold',
+        large ? 'size-14 text-lg' : 'size-10 text-sm',
+        AVATAR_COLORS[scenario.id] ?? 'bg-muted text-foreground',
+      )}
     >
       {initials}
     </div>
   )
 }
 
-/** The customer's anger, 0–100, as a bar coloured by mood. */
-export function AngerMeter({ anger, size = 'large' }: { anger: number; size?: 'large' | 'small' }) {
-  const { label, level } = mood(anger)
+// The anger bands are the customer's mood, shown as a colour scale from calm to furious.
+const MOOD_FILL: Record<ReturnType<typeof mood>['level'], string> = {
+  calm: '[&_[data-slot=progress-indicator]]:bg-emerald-500 dark:[&_[data-slot=progress-indicator]]:bg-emerald-400',
+  irritated: '[&_[data-slot=progress-indicator]]:bg-amber-500 dark:[&_[data-slot=progress-indicator]]:bg-amber-400',
+  angry: '[&_[data-slot=progress-indicator]]:bg-orange-500 dark:[&_[data-slot=progress-indicator]]:bg-orange-400',
+  furious: '[&_[data-slot=progress-indicator]]:bg-red-600 dark:[&_[data-slot=progress-indicator]]:bg-red-500',
+}
+
+/** The customer's anger, 0–100. The win line is 20 or below. */
+export function AngerMeter({ anger, label }: { anger: number; label?: string }) {
+  const current = mood(anger)
   return (
-    <div className={`anger anger-${size} mood-${level}`}>
-      {size === 'large' ? (
-        <div className="anger-head">
-          <span className="anger-label">{label}</span>
-          <span className="anger-value">
-            {anger}
-            <small>/100 anger</small>
-          </span>
-        </div>
-      ) : (
-        <div className="anger-head small">
-          <span className="anger-label">Starts {label.toLowerCase()}</span>
-          <span className="muted">{anger}/100 anger</span>
-        </div>
-      )}
-      <div
-        className="anger-track"
-        role="meter"
-        aria-label="Customer anger"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={anger}
-        aria-valuetext={`${anger} out of 100, ${label}`}
-      >
-        <div className="anger-fill" style={{ width: `${anger}%` }} />
-        <div className="anger-goal" title="Get the anger to 20 or below, with a fix agreed" />
-      </div>
-    </div>
+    <Progress value={anger} className={MOOD_FILL[current.level]}>
+      <ProgressLabel>{label ?? current.label}</ProgressLabel>
+      <ProgressValue>{(_, value) => `${value ?? anger}/100 anger`}</ProgressValue>
+    </Progress>
   )
 }
 
-export function Spinner({ label }: { label: string }) {
+export function ScenarioCardSkeleton() {
   return (
-    <div className="spinner" role="status">
-      <span className="spinner-dot" />
-      {label}
-    </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-10 rounded-full" />
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-2 w-full" />
+      </CardContent>
+    </Card>
   )
 }

@@ -12,8 +12,15 @@ import {
 import { SmallWebRTCTransport } from '@pipecat-ai/small-webrtc-transport'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { Captions, PhoneOff } from 'lucide-react'
+
 import { type CallState, offerEndpoint, type Scenario } from '../api.ts'
-import { AngerMeter, Avatar, Spinner } from '../components.tsx'
+import { AngerMeter, Avatar } from '../components.tsx'
+import { Alert, AlertDescription, AlertTitle } from '../components/reui/alert.tsx'
+import { Badge } from '../components/reui/badge.tsx'
+import { Button } from '../components/ui/button.tsx'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.tsx'
+import { cn } from '@/lib/utils'
 import { clock, isCalming, LANGUAGES, outcome, tagLabel } from '../labels.ts'
 
 type Caption = { id: number; who: 'customer' | 'you'; text: string }
@@ -66,7 +73,8 @@ function CallRoom({
   const [customerSpeaking, setCustomerSpeaking] = useState(false)
   const [youSpeaking, setYouSpeaking] = useState(false)
   const [clockBase, setClockBase] = useState<{ elapsed: number; at: number } | null>(null)
-  const [now, setNow] = useState(() => Date.now())
+  // The clock is read only in effects and event handlers (Date.now below), never in render.
+  const [now, setNow] = useState(0)
 
   const finalState = useRef<CallState | null>(null)
   const finished = useRef(false)
@@ -143,7 +151,9 @@ function CallRoom({
       return update
     })
     if (update.last_tags.length > 0) setTurn((count) => count + 1)
-    setClockBase({ elapsed: update.elapsed_s, at: Date.now() })
+    const at = Date.now()
+    setClockBase({ elapsed: update.elapsed_s, at })
+    setNow(at)
     setPhase((p) => (p === 'connecting' ? 'live' : p))
     if (update.status !== 'in_progress') {
       finalState.current = update
@@ -185,126 +195,130 @@ function CallRoom({
 
   if (phase === 'failed') {
     return (
-      <main className="page narrow">
-        <div className="notice error" role="alert">
-          <strong>The call couldn't connect</strong>
-          <p>{error || 'Check your connection and try again.'}</p>
-        </div>
-        <div className="actions">
-          <button type="button" className="primary" onClick={finish}>
-            Back
-          </button>
+      <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+        <Alert variant="destructive">
+          <AlertTitle>The call couldn't connect</AlertTitle>
+          <AlertDescription>{error || 'Check your connection and try again.'}</AlertDescription>
+        </Alert>
+        <div>
+          <Button onClick={finish}>Back</Button>
         </div>
       </main>
     )
   }
 
+  const status =
+    phase === 'connecting'
+      ? { label: 'Ringing', variant: 'primary-light' as const }
+      : customerSpeaking
+        ? { label: 'Speaking', variant: 'info-light' as const }
+        : youSpeaking
+          ? { label: 'Listening to you', variant: 'success-light' as const }
+          : { label: 'On the line', variant: 'outline' as const }
+
   return (
-    <main className="page narrow call">
-      <section className="call-head">
-        <div className={`speaker ${customerSpeaking ? 'speaking' : ''}`}>
-          <Avatar scenario={scenario} size={64} />
-        </div>
-        <div className="call-who">
-          <h1>{scenario.persona.name}</h1>
-          <p className="muted">
-            {phase === 'connecting'
-              ? 'Ringing…'
-              : customerSpeaking
-                ? 'Speaking…'
-                : youSpeaking
-                  ? 'Listening to you…'
-                  : 'On the line'}
-          </p>
-        </div>
-        <div className={`timer ${remaining <= 30 ? 'low' : ''}`} aria-label="Time left">
-          {clock(remaining)}
-        </div>
-      </section>
-
-      <AngerMeter anger={anger} />
-
-      <div className="call-status">
-        <div key={turn} className="tags" aria-live="polite">
-          {delta !== 0 && (
-            <span className={`delta ${delta < 0 ? 'good' : 'bad'}`}>
-              {delta > 0 ? `+${delta}` : delta} anger
-            </span>
-          )}
-          {state?.last_tags.map((tag) => (
-            <span key={tag} className={`tag ${isCalming(tag) ? 'good' : 'bad'}`}>
-              {tagLabel(tag)}
-            </span>
-          ))}
-        </div>
-        <div className="strikes" aria-label={`${strikes} of ${maxStrikes} policy strikes`}>
-          {Array.from({ length: maxStrikes }, (_, i) => (
-            <span key={i} className={`strike ${i < strikes ? 'used' : ''}`} />
-          ))}
-          <span className="muted small">strikes</span>
-        </div>
-      </div>
+    <main className="mx-auto flex h-dvh w-full max-w-2xl flex-col gap-4 px-4 py-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Avatar scenario={scenario} large />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <CardTitle>{scenario.persona.name}</CardTitle>
+              <div>
+                <Badge variant={status.variant}>{status.label}</Badge>
+              </div>
+            </div>
+            <div
+              aria-label="Time left"
+              className={cn(
+                'text-2xl font-semibold tracking-tight tabular-nums',
+                remaining <= 30 && 'text-destructive-foreground dark:text-destructive',
+              )}
+            >
+              {clock(remaining)}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <AngerMeter anger={anger} />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-1" aria-live="polite">
+              {delta !== 0 && (
+                <Badge variant={delta < 0 ? 'success-light' : 'destructive-light'}>
+                  {delta > 0 ? `+${delta}` : delta} anger
+                </Badge>
+              )}
+              {state?.last_tags.map((tag) => (
+                <Badge key={`${turn}-${tag}`} variant={isCalming(tag) ? 'success-light' : 'destructive-light'}>
+                  {tagLabel(tag)}
+                </Badge>
+              ))}
+            </div>
+            <Badge variant={strikes > 0 ? 'destructive-light' : 'outline'}>
+              Strikes {strikes}/{maxStrikes}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       {ending && (
-        <div className={`notice ${state?.status === 'won' ? 'success' : 'warn'}`} role="status">
-          <strong>{ending.title}</strong>
-          <p>{ending.detail}</p>
-        </div>
+        <Alert variant={state?.status === 'won' ? 'success' : 'warning'}>
+          <AlertTitle>{ending.title}</AlertTitle>
+          <AlertDescription>{ending.detail}</AlertDescription>
+        </Alert>
       )}
-
-      {phase === 'connecting' && <Spinner label="Connecting the call…" />}
 
       {showCaptions && (
-        <section className="captions" aria-label="Captions" aria-live="polite">
-          {captions.length === 0 && phase !== 'connecting' && (
-            <p className="muted small">The customer is about to speak…</p>
-          )}
-          {captions.map((caption) => (
-            <p key={caption.id} className={`bubble ${caption.who}`}>
-              <span className="bubble-who">
-                {caption.who === 'you' ? 'You' : scenario.persona.name}
-              </span>
-              {caption.text}
-            </p>
-          ))}
-          <div ref={captionsEnd} />
-        </section>
+        <Card className="min-h-0 flex-1">
+          <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" aria-label="Captions" aria-live="polite">
+            {captions.length === 0 && (
+              <p className="text-sm text-muted-foreground" role="status">
+                {phase === 'connecting' ? 'Connecting the call…' : 'The customer is about to speak…'}
+              </p>
+            )}
+            {captions.map((caption) => (
+              <div
+                key={caption.id}
+                className={cn('flex max-w-[85%] flex-col gap-0.5', caption.who === 'you' && 'self-end text-right')}
+              >
+                <span className="text-xs text-muted-foreground">
+                  {caption.who === 'you' ? 'You' : scenario.persona.name}
+                </span>
+                <p className="text-sm">{caption.text}</p>
+              </div>
+            ))}
+            <div ref={captionsEnd} />
+          </CardContent>
+        </Card>
       )}
+      {!showCaptions && <div className="flex-1" />}
 
-      <section className="call-controls">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {scenario.languages.length > 1 && (
-          <div className="segmented" role="group" aria-label="The language you speak">
+          <div className="flex gap-1" role="group" aria-label="The language you speak">
             {scenario.languages.map((code) => (
-              <button
+              <Button
                 key={code}
-                type="button"
-                className={code === language ? 'on' : ''}
+                variant="outline"
                 aria-pressed={code === language}
+                className={cn(code === language && 'bg-muted dark:bg-muted/50')}
                 onClick={() => switchLanguage(code)}
                 disabled={phase !== 'live'}
               >
                 {LANGUAGES[code]?.native ?? code}
-              </button>
+              </Button>
             ))}
           </div>
         )}
-        <button
-          type="button"
-          className="ghost"
-          aria-pressed={showCaptions}
-          onClick={() => setShowCaptions((on) => !on)}
-        >
+        <Button variant="outline" aria-pressed={showCaptions} onClick={() => setShowCaptions((on) => !on)}>
+          <Captions data-icon="inline-start" />
           Captions {showCaptions ? 'on' : 'off'}
-        </button>
-        <button
-          type="button"
-          className="danger"
-          onClick={hangUp}
-          disabled={phase === 'ending'}
-        >
+        </Button>
+        <Button variant="destructive" onClick={hangUp} disabled={phase === 'ending'}>
+          <PhoneOff data-icon="inline-start" />
           Hang up
-        </button>
-      </section>
+        </Button>
+      </div>
     </main>
   )
 }

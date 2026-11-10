@@ -1,7 +1,11 @@
+import { ArrowLeft, Check, MicOff, Phone, X } from 'lucide-react'
 import { useState } from 'react'
 
 import type { Scenario } from '../api.ts'
-import { AngerMeter, Avatar, Spinner } from '../components.tsx'
+import { AngerMeter, Avatar } from '../components.tsx'
+import { Alert, AlertDescription, AlertTitle } from '../components/reui/alert.tsx'
+import { Button } from '../components/ui/button.tsx'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.tsx'
 import { languageName } from '../labels.ts'
 
 type MicProblem = 'denied' | 'missing' | 'unsupported' | null
@@ -23,7 +27,7 @@ const MIC_HELP: Record<Exclude<MicProblem, null>, { title: string; detail: strin
   denied: {
     title: 'Microphone blocked',
     detail:
-      "The call needs your microphone. Click the lock or camera icon in your browser's address bar, allow the microphone for this site, then try again.",
+      "Allow the microphone for this site from the icon in your browser's address bar, then try again.",
   },
   missing: {
     title: 'No microphone found',
@@ -59,72 +63,108 @@ export function Brief({
 
   const busy = checkingMic || starting
   return (
-    <main className="page narrow">
-      <button type="button" className="link-button" onClick={onBack} disabled={busy}>
-        ← All customers
-      </button>
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+      <div>
+        <Button variant="ghost" onClick={onBack} disabled={busy}>
+          <ArrowLeft data-icon="inline-start" />
+          All customers
+        </Button>
+      </div>
 
-      <section className="card brief-head">
-        <Avatar scenario={scenario} size={72} />
-        <div>
-          <p className="eyebrow">
-            {scenario.company} · {scenario.title}
-          </p>
-          <h1>{scenario.persona.name}</h1>
-          <p className="lede">{scenario.summary}</p>
-        </div>
-      </section>
+      <Card>
+        <CardHeader>
+          <div className="flex items-start gap-4">
+            <Avatar scenario={scenario} large />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <CardDescription>
+                {scenario.company}: {scenario.title}
+              </CardDescription>
+              <CardTitle>{scenario.persona.name}</CardTitle>
+              <p className="text-sm text-muted-foreground">{scenario.summary}</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <AngerMeter anger={scenario.starting_anger} />
+        </CardContent>
+      </Card>
 
-      <AngerMeter anger={scenario.starting_anger} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <PolicyCard title="You may offer" items={scenario.allowed_remedies} allowed />
+        <PolicyCard
+          title="You must not"
+          description={`${scenario.max_strikes} broken rules and they hang up`}
+          items={scenario.forbidden_promises}
+        />
+      </div>
 
-      <section className="policy">
-        <div className="card policy-col allowed">
-          <h2>You may offer</h2>
-          <ul>
-            {scenario.allowed_remedies.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="card policy-col forbidden">
-          <h2>You must not</h2>
-          <ul>
-            {scenario.forbidden_promises.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <p className="muted small">
-            {scenario.max_strikes} broken rules and the customer hangs up.
-          </p>
-        </div>
-      </section>
-
-      <ul className="rules muted">
+      <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
         <li>
-          <strong>Win:</strong> anger down to 20 or below, with a fix the customer accepts.
+          <span className="font-medium text-foreground">Win:</span> anger down to 20 or below, with
+          a fix the customer accepts.
         </li>
         <li>
-          <strong>Time:</strong> {Math.round(scenario.time_limit_s / 60)} minutes. Insults end
-          the call at once.
+          <span className="font-medium text-foreground">Time:</span>{' '}
+          {Math.round(scenario.time_limit_s / 60)} minutes. Insults end the call at once.
         </li>
         <li>
-          <strong>Speak</strong> {scenario.languages.map(languageName).join(' or ')}. You can
-          interrupt the customer, like on a real call.
+          <span className="font-medium text-foreground">Speak</span>{' '}
+          {scenario.languages.map(languageName).join(' or ')}. You can interrupt, like on a real
+          call.
         </li>
       </ul>
 
       {micProblem && (
-        <div className="notice error" role="alert">
-          <strong>{MIC_HELP[micProblem].title}</strong>
-          <p>{MIC_HELP[micProblem].detail}</p>
-        </div>
+        <Alert variant="destructive">
+          <MicOff />
+          <AlertTitle>{MIC_HELP[micProblem].title}</AlertTitle>
+          <AlertDescription>{MIC_HELP[micProblem].detail}</AlertDescription>
+        </Alert>
       )}
 
-      <div className="actions">
-        <button type="button" className="primary big" onClick={start} disabled={busy}>
-          {busy ? <Spinner label="Connecting…" /> : micProblem ? 'Try again' : 'Start the call'}
-        </button>
-      </div>
+      <Button size="lg" className="w-full" onClick={start} disabled={busy}>
+        <Phone data-icon="inline-start" />
+        {busy ? 'Connecting…' : micProblem ? 'Try again' : 'Start the call'}
+      </Button>
     </main>
+  )
+}
+
+function PolicyCard({
+  title,
+  description,
+  items,
+  allowed = false,
+}: {
+  title: string
+  description?: string
+  items: string[]
+  allowed?: boolean
+}) {
+  const Icon = allowed ? Check : X
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>
+        <ul className="flex flex-col gap-2 text-sm">
+          {items.map((item) => (
+            <li key={item} className="flex gap-2">
+              <Icon
+                aria-hidden="true"
+                className={
+                  allowed
+                    ? 'mt-0.5 size-4 shrink-0 text-success-foreground dark:text-success'
+                    : 'mt-0.5 size-4 shrink-0 text-destructive-foreground dark:text-destructive'
+                }
+              />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   )
 }

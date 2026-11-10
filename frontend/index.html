@@ -7,6 +7,13 @@
     <title>Shant Karo · calm the angry customer</title>
     <meta name="description" content="A voice training game: calm an angry, code-mixed AI customer in three minutes without breaking company policy." />
     <meta name="theme-color" content="#3d3bd1" />
+    <script>
+      // shadcn themes switch on a .dark class; follow the system setting.
+      const media = window.matchMedia('(prefers-color-scheme: dark)')
+      const apply = () => document.documentElement.classList.toggle('dark', media.matches)
+      apply()
+      media.addEventListener('change', apply)
+    </script>
   </head>
   <body>
     <div id="root"></div>

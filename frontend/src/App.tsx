@@ -7,7 +7,8 @@ import {
   StartRefused,
   startSession,
 } from './api.ts'
-import { Spinner } from './components.tsx'
+import { Alert, AlertDescription, AlertTitle } from './components/reui/alert.tsx'
+import { Button } from './components/ui/button.tsx'
 import { Brief } from './screens/Brief.tsx'
 import { Picker } from './screens/Picker.tsx'
 import { ReportView } from './screens/ReportView.tsx'
@@ -25,6 +26,7 @@ type Screen =
 export default function App() {
   const [scenarios, setScenarios] = useState<Scenario[] | null>(null)
   const [loadError, setLoadError] = useState('')
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [screen, setScreen] = useState<Screen>({ name: 'picker' })
   const [starting, setStarting] = useState(false)
 
@@ -32,11 +34,17 @@ export default function App() {
     fetchScenarios()
       .then(setScenarios)
       .catch((reason: unknown) => setLoadError(reason instanceof Error ? reason.message : String(reason)))
-  }, [])
+  }, [loadAttempt])
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [screen.name])
+
+  const retryLoad = useCallback(() => {
+    setLoadError('')
+    setScenarios(null)
+    setLoadAttempt((count) => count + 1)
+  }, [])
 
   async function startCall(scenario: Scenario) {
     setStarting(true)
@@ -60,27 +68,16 @@ export default function App() {
     [],
   )
 
-  if (loadError) {
-    return (
-      <main className="page narrow">
-        <div className="notice error" role="alert">
-          <strong>The training centre is closed right now</strong>
-          <p>{loadError}. Please try again in a few minutes.</p>
-        </div>
-      </main>
-    )
-  }
-  if (!scenarios) {
-    return (
-      <main className="page narrow">
-        <Spinner label="Loading the customers…" />
-      </main>
-    )
-  }
-
   switch (screen.name) {
     case 'picker':
-      return <Picker scenarios={scenarios} onPick={(scenario) => setScreen({ name: 'brief', scenario })} />
+      return (
+        <Picker
+          scenarios={scenarios}
+          error={loadError}
+          onRetry={retryLoad}
+          onPick={(scenario) => setScreen({ name: 'brief', scenario })}
+        />
+      )
     case 'brief':
       return (
         <Brief
@@ -94,8 +91,8 @@ export default function App() {
       return (
         <Suspense
           fallback={
-            <main className="page narrow">
-              <Spinner label="Connecting the call…" />
+            <main className="mx-auto w-full max-w-2xl px-4 py-8 text-sm text-muted-foreground" role="status">
+              Connecting the call…
             </main>
           }
         >
@@ -119,18 +116,16 @@ export default function App() {
       )
     case 'refused':
       return (
-        <main className="page narrow">
-          <div className="notice warn" role="alert">
-            <strong>We couldn't connect you</strong>
-            <p>{screen.message}</p>
-          </div>
-          <div className="actions">
-            <button type="button" className="primary" onClick={() => setScreen({ name: 'brief', scenario: screen.scenario })}>
-              Try again
-            </button>
-            <button type="button" className="ghost" onClick={() => setScreen({ name: 'picker' })}>
+        <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+          <Alert variant="warning">
+            <AlertTitle>We couldn't connect you</AlertTitle>
+            <AlertDescription>{screen.message}</AlertDescription>
+          </Alert>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setScreen({ name: 'brief', scenario: screen.scenario })}>Try again</Button>
+            <Button variant="outline" onClick={() => setScreen({ name: 'picker' })}>
               Pick another customer
-            </button>
+            </Button>
           </div>
         </main>
       )
